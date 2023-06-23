@@ -20,6 +20,3 @@ Deployment with sources
 
 Phase 3 
 Deployment with dopants 
-
-
-
