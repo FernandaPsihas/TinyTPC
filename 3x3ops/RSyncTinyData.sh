@@ -1,4 +1,16 @@
 #!/bin/bash
+
+################################################
+#
+#     Rsync TinyTPC data for into /dune/data
+#
+#
+#    psihas@fnal.gov
+#
+#
+
+
+
 args=("$@")
 argssize=${#args[*]}
 if [ $argssize -ne 2 ];then
@@ -23,7 +35,7 @@ if [ $DET == "3x3" ];then
 
    /usr/krb5/bin/kinit -k -t /home///psihas.cron.dunegpvm01.fnal.gov.keytab psihas/cron/dunegpvm01.fnal.gov@FNAL.GOV
    
-   /usr/bin/rsync -vura -e "ssh -o StrictHostKeyChecking=no" /nearline-data/OnMon/FarDet novadata@nova04.fnal.gov:/nova/data/nearline-OnMon/ --exclude '*.LOCK' --exclude '*.DONE' --exclude '*.log'
+   /usr/bin/rsync -vura -e "ssh -o StrictHostKeyChecking=no" /Users/tinytpc/data psihas@dune04.fnal.gov:/dune/data/users/psihas/TinyTPC/Bench --exclude '*.LOCK' --exclude '*.DONE' --exclude '*.log'
    
    rm -v /tmp/${LOCKFILE}
    exit
