@@ -3,7 +3,13 @@
 #
 #
 #  Created by Fernanda Psihas Olmedo on 2/16/23.
-#
+#  Contributor / Co-Author: Panagiotis (Panos) Englezos [p.englezos@physics.rutgers.edu]
+
+# How to commit changes to GitHub:
+# 1) git add <filename>
+# 2) git commit -m "<message>"
+
+
 #CONFIG_FILENAME='controller/network-3x3-tile-short_byhand_v18c.json'
 CONFIG_FILENAME='controller/network-3x3-tile-short_byhand_v18b.json'
 LOGFILE_BASE='base.log'
