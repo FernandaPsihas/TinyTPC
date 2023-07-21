@@ -50,7 +50,7 @@ fig.update_layout(#title_text="Scatter 3D Plot",
 fig.update_traces(marker=dict(size=2))
 
 fig.show()
-
+fig.write_image('fig1.pdf')
 
 # Select data
 X = df[['X','Y', 'Time']]
@@ -64,6 +64,8 @@ axs[1].set_title('Y')
 axs[2].hist(X.iloc[:,2], bins=50, color='black', rwidth=0.9)
 axs[2].set_title('Time')
 plt.show()
+plt.savefig('plot1.pdf')
+
 
 # Apply MinMaxScaler
 scaler = MinMaxScaler()
@@ -78,6 +80,7 @@ axs[1].set_title('Y')
 axs[2].hist(X_scaled[:,2], bins=50, color='black', rwidth=0.9)
 axs[2].set_title('Time')
 plt.show()
+plt.savefig('plot2.pdf')
 
 
 # Create empty lists
@@ -105,6 +108,8 @@ plt.xlabel('Epsilon/100 | MinPts')
 plt.ylabel('Silhouette Score')
 plt.title('Silhouette Score based on different combnation of Hyperparameters')
 plt.show()
+plt.savefig('plot.pdf')
+
 
 
 # ------- DBSCAN -------
@@ -185,6 +190,7 @@ fig.show()
 
 
 
+
 # Sort the dataframe so clusters in the legend follow the number order
 df=df.sort_values(by=['DBSCAN Clusters 52'])
 
@@ -227,3 +233,46 @@ fig.update_traces(marker=dict(size=2))
 
 fig.show()
 fig.write_image('fig.pdf')
+
+# Sort the dataframe so clusters in the legend follow the number order
+df=df.sort_values(by=['DBSCAN Clusters 47'])
+
+# Create a 3D scatter plot
+fig = px.scatter_3d(df, x=df['X'], y=df['Y'], z=df['Time'],
+                    opacity=1, color=df['DBSCAN Clusters 47'].astype(str),
+                    color_discrete_sequence=['black']+px.colors.qualitative.Plotly,
+                    hover_data=['X', 'Y','Time'],
+                    width=900, height=900
+                   )
+
+# Update chart looks
+fig.update_layout(#title_text="Scatter 3D Plot",
+                  showlegend=True,
+                  legend=dict(orientation="h", yanchor="bottom", y=0.04, xanchor="left", x=0.1),
+                  scene_camera=dict(up=dict(x=0, y=0, z=1),
+                                        center=dict(x=0, y=0, z=-0.2),
+                                        eye=dict(x=1.5, y=1.5, z=0.5)),
+                                        margin=dict(l=0, r=0, b=0, t=0),
+                  scene = dict(xaxis=dict(backgroundcolor='white',
+                                          color='black',
+                                          gridcolor='#f0f0f0',
+                                          title_font=dict(size=15),
+                                          tickfont=dict(size=10),
+                                         ),
+                               yaxis=dict(backgroundcolor='white',
+                                          color='black',
+                                          gridcolor='#f0f0f0',
+                                          title_font=dict(size=15),
+                                          tickfont=dict(size=10),
+                                          ),
+                               zaxis=dict(backgroundcolor='lightgrey',
+                                          color='black',
+                                          gridcolor='#f0f0f0',
+                                          title_font=dict(size=15),
+                                          tickfont=dict(size=10),
+                                         )))
+# Update marker size
+fig.update_traces(marker=dict(size=2))
+
+fig.show()
+fig.write_image('fig2.pdf')
