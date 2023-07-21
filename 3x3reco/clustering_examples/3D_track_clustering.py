@@ -50,7 +50,8 @@ fig.update_layout(#title_text="Scatter 3D Plot",
 fig.update_traces(marker=dict(size=2))
 
 fig.show()
-fig.write_image('fig1.pdf')
+fig.write_image('fig0.pdf')
+po.plot(fig, filename='fig0.html')
 
 # Select data
 X = df[['X','Y', 'Time']]
@@ -63,7 +64,7 @@ axs[1].hist(X.iloc[:,1], bins=50, color='black', rwidth=0.9)
 axs[1].set_title('Y')
 axs[2].hist(X.iloc[:,2], bins=50, color='black', rwidth=0.9)
 axs[2].set_title('Time')
-plt.show()
+#plt.show()
 plt.savefig('plot1.pdf')
 
 
@@ -79,7 +80,7 @@ axs[1].hist(X_scaled[:,1], bins=50, color='black', rwidth=0.9)
 axs[1].set_title('Y')
 axs[2].hist(X_scaled[:,2], bins=50, color='black', rwidth=0.9)
 axs[2].set_title('Time')
-plt.show()
+#plt.show()
 plt.savefig('plot2.pdf')
 
 
@@ -107,7 +108,7 @@ plt.plot(comb, S, 'bo-')
 plt.xlabel('Epsilon/100 | MinPts')
 plt.ylabel('Silhouette Score')
 plt.title('Silhouette Score based on different combnation of Hyperparameters')
-plt.show()
+#plt.show()
 plt.savefig('plot.pdf')
 
 
@@ -187,6 +188,8 @@ fig.update_layout(#title_text="Scatter 3D Plot",
 fig.update_traces(marker=dict(size=2))
 
 fig.show()
+fig.write_image('fig1.pdf')
+po.plot(fig, filename='fig1.html')
 
 
 
@@ -233,3 +236,4 @@ fig.update_traces(marker=dict(size=2))
 
 fig.show()
 fig.write_image('fig.pdf')
+po.plot(fig, filename='fig.html')
