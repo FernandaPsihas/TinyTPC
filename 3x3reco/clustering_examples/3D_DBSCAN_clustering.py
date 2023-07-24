@@ -178,6 +178,8 @@ fig.update_layout(#title_text="Scatter 3D Plot",
 fig.update_traces(marker=dict(size=2))
 
 fig.show()
+fig.write_image('fig1_.pdf')
+po.plot(fig, filename='fig1_.html')
 
 
 
@@ -222,3 +224,5 @@ fig.update_layout(#title_text="Scatter 3D Plot",
 fig.update_traces(marker=dict(size=2))
 
 fig.show()
+fig.write_image('fig2_.pdf')
+po.plot(fig, filename='fig2_.html')
