@@ -7,6 +7,7 @@ from sklearn import metrics #for calculating the silhouette score
 import matplotlib.pyplot as plt #for data visualization 
 import plotly.graph_objects as go #for data visualization
 import plotly.express as px #for data visulaization
+import plotly.offline as po #to print figures
 
 #reading the sample data that I downloaded
 
@@ -46,6 +47,9 @@ fig.update_layout(#title_text="Scatter 3D Plot",
 fig.update_traces(marker=dict(size=2))
 
 fig.show()
+fig.write_image('fig0_.pdf')
+po.plot(fig, filename='fig0_.html')
+
 
 # Select data
 X = df[['X3 distance to the nearest MRT station','X2 house age', 'Y house price of unit area']]
