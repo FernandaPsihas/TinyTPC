@@ -129,10 +129,12 @@ model42 = DBSCAN(eps=0.04, # default=0.5, The maximum distance between two sampl
 
 # Second model: eps=0.05, MinPts=2
 model52 = DBSCAN(eps=0.05, min_samples=2) # note, as above this uses default value for other parameters
+model47 = DBSCAN(eps=.04, min_samples=7)
 
 # Fit the models
 clm42 = model42.fit(X_scaled)
 clm52 = model52.fit(X_scaled)
+clm47 = model47.fit(X_scaled)
 
 # Print DBSCAN results
 print('*************** DBSCAN Clustering Model ***************')
@@ -140,9 +142,13 @@ print("Cluster labels for the first model")
 print(clm42.labels_)
 print("Cluster labels for the second model")
 print(clm52.labels_)
+print("Cluster labels for the third model")
+print(clm47.labels_)
 
 df['DBSCAN Clusters 42']=clm42.labels_
 df['DBSCAN Clusters 52']=clm52.labels_
+df['DBSCAN Clusters 47']=clm47.labels_
+
 print(df)
 
 
@@ -235,5 +241,51 @@ fig.update_layout(#title_text="Scatter 3D Plot",
 fig.update_traces(marker=dict(size=2))
 
 fig.show()
-fig.write_image('fig.pdf')
-po.plot(fig, filename='fig.html')
+fig.write_image('fig2.pdf')
+po.plot(fig, filename='fig2.html')
+
+
+
+# Sort the dataframe so clusters in the legend follow the number order
+df=df.sort_values(by=['DBSCAN Clusters 47'])
+
+# Create a 3D scatter plot
+fig = px.scatter_3d(df, x=df['X'], y=df['Y'], z=df['Time'],
+                    opacity=1, color=df['DBSCAN Clusters 47'].astype(str),
+                    color_discrete_sequence=['black']+px.colors.qualitative.Plotly,
+                    hover_data=['X', 'Y','Time'],
+                    width=900, height=900
+                   )
+
+# Update chart looks
+fig.update_layout(#title_text="Scatter 3D Plot",
+                  showlegend=True,
+                  legend=dict(orientation="h", yanchor="bottom", y=0.04, xanchor="left", x=0.1),
+                  scene_camera=dict(up=dict(x=0, y=0, z=1),
+                                        center=dict(x=0, y=0, z=-0.2),
+                                        eye=dict(x=1.5, y=1.5, z=0.5)),
+                                        margin=dict(l=0, r=0, b=0, t=0),
+                  scene = dict(xaxis=dict(backgroundcolor='white',
+                                          color='black',
+                                          gridcolor='#f0f0f0',
+                                          title_font=dict(size=15),
+                                          tickfont=dict(size=10),
+                                         ),
+                               yaxis=dict(backgroundcolor='white',
+                                          color='black',
+                                          gridcolor='#f0f0f0',
+                                          title_font=dict(size=15),
+                                          tickfont=dict(size=10),
+                                          ),
+                               zaxis=dict(backgroundcolor='lightgrey',
+                                          color='black',
+                                          gridcolor='#f0f0f0',
+                                          title_font=dict(size=15),
+                                          tickfont=dict(size=10),
+                                         )))
+# Update marker size
+fig.update_traces(marker=dict(size=2))
+
+fig.show()
+fig.write_image('fig3.pdf')
+po.plot(fig, filename='fig3.html')
