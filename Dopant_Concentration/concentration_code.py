@@ -33,7 +33,7 @@ def Concentration(LArlevel, Masschange, XOGConc, ArOGConc,Xmolweight):
     #the code below calcualte the starting mass of the LAr in the cryostat before the mixture is added
     r=38 #radius of the cryostat in cm
     V= np.pi*(38**2)*LArlevel #The LArlevel should be in centimeter
-    D= 1.4 #units = g/ml #density of argon
+    D= 1.396 #units = g/ml #density of argon
     M_LAr= D * V
     print("Starting Mass of LAr =", M_LAr, "grams")
 

@@ -3,7 +3,7 @@
 # This bash file runs our whole sequnce of scripts automatically (making sure that they were successful). The log files are
 # being stored to /tinytpc/data/
 #
-# Execution: ./Run-3x3tile.sh base_flag pedestal_flag threshold_flag start_run_flag
+# Execution: ./Run-3x3tile.sh base_flag pedestal_flag threshold_flag different_pedestal_files_flag start_run_flag different_config_files_flag copy_to_dune_flag
 #
 # Created by Fernanda Psihas Olmedo on 2/16/23.
 # Main-Contributor / Co-Author: Panagiotis (Panos) Englezos
@@ -11,14 +11,20 @@
 
 #!/bin/sh
 
-#Date and Time when the bash script starts running
-DATE_HOUR_START_SCRIPT=$(date '+%Y_%m_%d_%H_CT')
-DATE_TIME_START_SCRIPT=$(date '+%Y_%m_%d_%H-%M_CT')
-DATE_SECONDS_START_SCRIPT=$(date '+%Y_%m_%d_%H-%M-%S_CT')
+#<<<<<<< HEAD
+##Date and Time when the bash script starts running
+#DATE_HOUR_START_SCRIPT=$(date '+%Y_%m_%d_%H_CT')
+#DATE_TIME_START_SCRIPT=$(date '+%Y_%m_%d_%H-%M_CT')
+#DATE_SECONDS_START_SCRIPT=$(date '+%Y_%m_%d_%H-%M-%S_CT')
+#DATE_START_SCRIPT=$(date '+%Y_%m_%d')
+
+#if [ "$#" -ne 4 ]; then
+#    printf 'ERROR! You must provide four (4) and only four booleans ("true" or "false")!'
+#Verify that all four flags have input values.
 DATE_START_SCRIPT=$(date '+%Y_%m_%d')
 
-if [ "$#" -ne 4 ]; then
-    printf 'ERROR! You must provide four (4) and only four booleans ("true" or "false")!'
+if [ "$#" -ne 6 ]; then
+    printf 'ERROR! You must provide six and only six booleans ("true" or "false")!'
     exit 1
 fi
 
@@ -31,22 +37,25 @@ do
   fi
 done
 
-if [ "$2" = true ]; then #the user wants to execute pedestal_qc.py
-  echo "\nShould any keywords be appended to the name of the output pedestal files? (y/n)"
-  read APP_KEYW
-  if [ "$APP_KEYW" != "y" ] && [ "$APP_KEYW" != "n" ]; then
-      printf 'ERROR! You must provide either "y" or "n"!'
-      exit 1
-  fi
-  if [ "$APP_KEYW" = "y" ]; then
-    echo "\nWhich keywords should be included (make sure to include the pedestal's cut values)?"
-    read KEYW
-  fi
-fi
+#<<<<<<< HEAD
+#if [ "$2" = true ]; then #the user wants to execute pedestal_qc.py
+#  echo "\nShould any keywords be appended to the name of the output pedestal files? (y/n)"
+#  read APP_KEYW
+#  if [ "$APP_KEYW" != "y" ] && [ "$APP_KEYW" != "n" ]; then
+#      printf 'ERROR! You must provide either "y" or "n"!'
+#      exit 1
+#  fi
+#  if [ "$APP_KEYW" = "y" ]; then
+#    echo "\nWhich keywords should be included (make sure to include the pedestal's cut values)?"
+#    read KEYW
+#  fi
+#fi
 
-dif_ped_files=false
-if [ "$3" = true ] && [ "$2" = false ]; then #the user wants to execute threshold_qc.py, but not pedestal_qc.py  (so, there are no default output pedestal files)
-  dif_ped_files=true
+#dif_ped_files=false
+#if [ "$3" = true ] && [ "$2" = false ]; then #the user wants to execute threshold_qc.py, but not pedestal_qc.py#  (so, there are no default output pedestal files)
+#  dif_ped_files=true
+#=======
+if [ "$4" = true ]; then
 
   #Verify that the input files are not empty and in the correct format.
   non_empty_file1=false
@@ -106,22 +115,25 @@ if [ "$3" = true ] && [ "$2" = false ]; then #the user wants to execute threshol
   done
 fi
 
-if [ "$3" = true ]; then #the user wants to execute threshold_qc.py
-  echo "\nShould any keywords be appended to the name of the output threshold files? (y/n)"
-  read APP_KEYW_THR
-  if [ "$APP_KEYW_THR" != "y" ] && [ "$APP_KEYW_THR" != "n" ]; then
-      printf 'ERROR! You must provide either "y" or "n"!\n'
-      exit 1
-  fi
-  if [ "$APP_KEYW_THR" = "y" ]; then
-    echo "\nWhich keywords should be included (make sure to include the pedestal's cut values)?"
-    read KEYW_THR
-  fi
-fi
-
+#<<<<<<< HEAD
+#if [ "$3" = true ]; then #the user wants to execute threshold_qc.py
+#  echo "\nShould any keywords be appended to the name of the output threshold files? (y/n)"
+#  read APP_KEYW_THR
+#  if [ "$APP_KEYW_THR" != "y" ] && [ "$APP_KEYW_THR" != "n" ]; then
+#      printf 'ERROR! You must provide either "y" or "n"!\n'
+#      exit 1
+#  fi
+#  if [ "$APP_KEYW_THR" = "y" ]; then
+#    echo "\nWhich keywords should be included (make sure to include the pedestal's cut values)?"
+#    read KEYW_THR
+#  fi
+#fi
+#
 dif_thresh_files=false
 if [ "$4" = true ] && [ "$3" = false ]; then #the user wants to execute start_run_log_raw.py, but not threshold_qc.py  (so, there are no default output threshold_qc files)
   dif_thresh_files=true
+
+if [ "$6" = true ]; then
   #Verify that the input files are not empty and in .json format.
   while :
   do
@@ -129,7 +141,8 @@ if [ "$4" = true ] && [ "$3" = false ]; then #the user wants to execute start_ru
     read DIRECTORY
     input_config_files=( $DIRECTORY* )
     if [ ${#input_config_files[@]} -ne 9 ]; then
-      echo "\nERROR! Not a directory with exactly 9 files was provided. Verify that the provided path ENDS in "/" "
+      echo "\nERROR! Not a directory with exactly 9 files was provided. Verify that the provided path ENDS i"
+      echo "\nERROR! Not exactly 9 files were provided. Verify that the provided path ends in "/" "
       continue
     fi
     i_file=1;
@@ -177,9 +190,18 @@ fi
 RUN_BASE=$1
 RUN_PEDESTAL_FINBASE=$2
 RUN_THRESHOLD=$3
-RUN_START_RUN=$4
+
+DIFFERENT_PEDESTAL_FILES_FLAG=$4
+RUN_START_RUN=$5
+DIFFERENT_CONFIG_FILES_FLAG=$6
+
+#Date and Time when the bash script starts running
+DATE_HOUR_START_SCRIPT=$(date '+%Y_%m_%d_%H_CT')
+DATE_TIME_START_SCRIPT=$(date '+%Y_%m_%d_%H-%M_CT')
+DATE_SECONDS_START_SCRIPT=$(date '+%Y_%m_%d_%H-%M-%S_CT')
 
 #Go to the directory where we want to store our data and create a folder based on the date and time of the current execution
+#we are storing based on minutes and not seconds, because that would be too specific.
 cd /Users/tinytpc/data/
 
 if [ ! -d "$DATE_START_SCRIPT" ]; then
@@ -195,10 +217,13 @@ echo "\nDirectory of logfiles: /Users/tinytpc/data/${DATE_START_SCRIPT}/${DATE_T
 cd /Users/tinytpc/GitCode/larpix-base/larpix-10x10-scripts
 
 CONFIG_FILENAME='./controller/network-3x3-tile-short_byhand_v18b.json' # network configuration of the LArPix chips
-if [ ! -f "$CONFIG_FILENAME" ]; then
-    echo "\nERROR! The network configuration file doesn't exist. Please provide its correct path."
-    exit 1
+if [ -f "$CONFIG_FILENAME" ]; then
+    file1_exists=true
+else
+  echo "\nERROR! The first entry doesn't exist. Please provide its full path."
+  continue
 fi
+
 
 if [  "$RUN_BASE" = false ];then
   echo "The execution of base.py will be skipped."
@@ -211,7 +236,7 @@ while [  "$RUN_BASE" = true ]
 do
   #Date and Time when base.py startes running
   DATE_TIME_BASE_START=$(date +"%Y_%m_%d_%H-%M_CT")
-  DATE_SECONDS_BASE_START=$(date +"%s")
+  DATE_SECONDS_BASE_START=$(date +"%S")
 
   echo "\n------ Attempt: $i_base ------"
 
@@ -220,7 +245,7 @@ do
   if [ "$(sed '9q;d' base.log)" = '[FINISH BASE]' ];then
     echo '\nSuccess! \n'
     DATE_TIME_BASE_END=$(date +"%Y_%m_%d_%H-%M_CT")
-    DATE_SECONDS_BASE_END=$(date +"%s")
+    DATE_SECONDS_BASE_END=$(date +"%S")
     DURATION=$((DATE_SECONDS_BASE_END - DATE_SECONDS_BASE_START))
     echo "\nAttempt $i_base ran for $DURATION seconds"
     echo "This attempt ran for $DURATION seconds" >> base.log
@@ -229,7 +254,7 @@ do
     RUN_BASE=false
   else
     DATE_TIME_BASE_END=$(date +"%Y_%m_%d_%H-%M_CT")
-    DATE_SECONDS_BASE_END=$(date +"%s")
+    DATE_SECONDS_BASE_END=$(date +"%S")
     DURATION=$((DATE_SECONDS_BASE_END - DATE_SECONDS_BASE_START))
     echo "\nAttempt $i_base ran for $DURATION seconds"
     echo "This attempt ran for $DURATION seconds" >> base.log
@@ -259,7 +284,7 @@ do
   i_pedestal=$((i_pedestal + 1))
   #Date and Time when pedestal_qc.py starts running
   DATE_TIME_PEDESTAL_START=$(date +"%Y_%m_%d_%H-%M_CT")
-  DATE_SECONDS_PEDESTAL_START=$(date +"%s")
+  DATE_SECONDS_PEDESTAL_START=$(date +"%S")
 
   echo "\n------ Attempt: $i_pedestal ------"
   python3 pedestal_qc.py --controller_config ${CONFIG_FILENAME} >> pedestal.log  2>&1
@@ -267,7 +292,7 @@ do
   if [ "$(sed '13q;d' pedestal.log)" = '[FINISH BASE]' ];then
     echo '\nSuccess! \n'
     DATE_TIME_PEDESTAL_END=$(date +"%Y_%m_%d_%H-%M_CT")
-    DATE_SECONDS_PEDESTAL_END=$(date +"%s")
+    DATE_SECONDS_PEDESTAL_END=$(date +"%S")
     DURATION=$((DATE_SECONDS_PEDESTAL_END - DATE_SECONDS_PEDESTAL_START))
 
    #Possible monitoring flags:
@@ -283,76 +308,52 @@ do
     RUN_PEDESTAL_FINBASE=false
   else
     DATE_TIME_PEDESTAL_END=$(date +"%Y_%m_%d_%H-%M_CT")
-    DATE_SECONDS_PEDESTAL_END=$(date +"%s")
+    DATE_SECONDS_PEDESTAL_END=$(date +"%S")
     DURATION=$((DATE_SECONDS_PEDESTAL_END - DATE_SECONDS_PEDESTAL_START))
     echo "\nAttempt $i_pedestal ran for $DURATION seconds"
     echo "This attempt ran for $DURATION seconds" >> pedestal.log
     mv pedestal.log failed_pedestal_attempt_${i_pedestal}_${DATE_TIME_PEDESTAL_START}.log #rename the pedestal file based on the run's information
     mv failed_pedestal_attempt_${i_pedestal}_${DATE_TIME_PEDESTAL_START}.log ${log_directory} #move the file to the log directory
-    search_dir=/Users/tinytpc/data/${DATE_START_SCRIPT}
-    for entry_h5 in "$search_dir"/*.h5
-    do
-      if [ "$APP_KEYW" = "y" ]; then
-        filename="${entry_h5%.*}"
-        mv ${entry_h5} ${filename}_${KEYW}_FAILED.h5
-        entry_h5="${filename}_${KEYW}_FAILED.h5"
-      else
-        mv ${entry_h5} ${filename}_FAILED.h5
-        entry_h5="${filename}_FAILED.h5"
-      fi
-        mv ${entry_h5} ${log_directory}
-    done
     echo '\nFailure! Trying again...'
   fi
   done
 
   if (( $i_pedestal > 0 )); then
+
     search_dir=/Users/tinytpc/data/${DATE_START_SCRIPT}
     for entry_json in "$search_dir"/*.json
     do
-      if [ "$APP_KEYW" = "y" ]; then
-        filename="${entry_json%%.*}"
-        mv ${entry_json} ${filename}_${KEYW}.json
-        entry_json="${filename}_${KEYW}.json"
-      fi
+        echo "${entry_json} is moved to ${log_directory}"
         mv ${entry_json} ${log_directory}
     done
     for entry_h5 in "$search_dir"/*.h5
     do
-      if [ "$APP_KEYW" = "y" ]; then
-        filename="${entry_h5%.*}"
-        mv ${entry_h5} ${filename}_${KEYW}.h5
-        entry_h5="${filename}_${KEYW}.h5"
-      fi
+        echo "${entry_h5} is moved to ${log_directory}"
         mv ${entry_h5} ${log_directory}
     done
     for entry_recur in "$search_dir"/tile-id-tile-recursive-pedestal*
     do
-      if [ "$APP_KEYW" = "y" ]; then
-        filename="${entry_recur%T*}"
-        mv ${entry_recur} ${filename}_${KEYW}
-        entry_recur="${filename}_${KEYW}"
-      fi
+        echo "${entry_recur} is moved to ${log_directory}"
         mv ${entry_recur} ${log_directory}
     done
   fi
 
-  echo '\n------------------------\n '
+echo '\n------------------------\n '
 
-  # If input flag was false, then, by default, threshold_qc.py will use the most recent pedestal files.
-  if [  "$RUN_THRESHOLD" = false ];then
-    echo "The execution of threshold_qc.py will be skipped."
+# If input flag was false, then, by default, threshold_qc.py will use the most recent pedestal files.
+if [  "$RUN_THRESHOLD" = false ];then
+  echo "The execution of threshold_qc.py will be skipped."
+else
+  if [ "$DIFFERENT_PEDESTAL_FILES_FLAG" = false && "$RUN_PEDESTAL_FINBASE" = true ]; then
+    DISABLED_FILE="$(ls -t ${log_directory}tile-id-tile-pedestal-disabled-list*.json | head -n 1)"
+    PEDESTAL_FILE="$(ls -t ${log_directory}tile-id-tile-pedestal_*disabled-channels.h5| head -n 1)"
+
+    echo "The most recent disabled list and default disabled channels are: \n${DISABLED_FILE}\n${PEDESTAL_FILE}"
   else
-    if [ "$dif_ped_files" = false ]; then
-      DISABLED_FILE="$(ls -t ${log_directory}tile-id-tile-pedestal-disabled-list*.json | head -n 1)"
-      PEDESTAL_FILE="$(ls -t ${log_directory}tile-id-tile-pedestal_*.h5| head -n 1)"
-
-      echo "The most recent disabled list and default disabled channels are: \n${DISABLED_FILE}\n${PEDESTAL_FILE}"
-    else
-      echo "As requested, the following files will be used as input parameters for threshold_qc.py: \n${DISABLED_FILE}\n${PEDESTAL_FILE}"
-    fi
-    echo "\nNow executing threshold_qc.py: python3 threshold_qc.py --controller_config $CONFIG_FILENAME --disabled_list ${DISABLED_FILE}  --pedestal_file ${PEDESTAL_FILE} >> ./threshold.log  2>&1 \n"
+    echo "As requested, the following files will be used as input parameters for threshold_qc.py: \n${DISABLED_FILE}\n${PEDESTAL_FILE}"
   fi
+  echo "\nNow executing threshold_qc.py: python3 threshold_qc.py --controller_config $CONFIG_FILENAME --disabled_list ${DISABLED_FILE}  --pedestal_file ${PEDESTAL_FILE} >> ./threshold.log  2>&1 \n"
+fi
 
 i_threshold=0;
 
@@ -361,7 +362,7 @@ do
   i_threshold=$((i_threshold + 1))
   #Date and Time when threshold_qc.py starts running
   DATE_TIME_THRESHOLD_START=$(date +"%Y_%m_%d_%H-%M_CT")
-  DATE_SECONDS_THRESHOLD_START=$(date +"%s")
+  DATE_SECONDS_THRESHOLD_START=$(date +"%S")
 
   echo "\n------ Attempt: $i_threshold ------"
   python3 threshold_qc.py --controller_config ${CONFIG_FILENAME} --disabled_list ${DISABLED_FILE}  --pedestal_file ${PEDESTAL_FILE} >> threshold.log  2>&1
@@ -369,7 +370,7 @@ do
   if [ "$(sed '9q;d' threshold.log)" = '[FINISH BASE]' ];then
     echo '\nSuccess! \n'
     DATE_TIME_THRESHOLD_END=$(date +"%Y_%m_%d_%H-%M_CT")
-    DATE_SECONDS_THRESHOLD_END=$(date +"%s")
+    DATE_SECONDS_THRESHOLD_END=$(date +"%S")
     DURATION=$((DATE_SECONDS_THRESHOLD_END - DATE_SECONDS_THRESHOLD_START))
 
     echo "\nAttempt $i_threshold ran for $DURATION seconds"
@@ -379,10 +380,10 @@ do
     RUN_THRESHOLD=false
   else
     DATE_TIME_THRESHOLD_END=$(date +"%Y_%m_%d_%H-%M_CT")
-    DATE_SECONDS_THRESHOLD_END=$(date +"%s")
+    DATE_SECONDS_THRESHOLD_END=$(date +"%S")
     DURATION=$((DATE_SECONDS_THRESHOLD_END - DATE_SECONDS_THRESHOLD_START))
-    echo "\nAttempt $i_threshold ran for ${DURATION} seconds"
-    echo "This attempt ran for ${DURATION} seconds" >> threshold.log
+    echo "\nAttempt $i_threshold ran for $DURATION seconds"
+    echo "This attempt ran for $DURATION seconds" >> threshold.log
     mv threshold.log failed_threshold_attempt_${i_threshold}_${DATE_TIME_THRESHOLD_START}.log #rename the threshold file based on the run's information
     mv failed_threshold_attempt_${i_threshold}_${DATE_TIME_THRESHOLD_START}.log ${log_directory} #move the file to the log directory
     echo '\nFailure! Trying again...'
@@ -393,17 +394,17 @@ do
     for i in {1..9}
     do
      CHIP_FILE="$(ls -t ./tile-id-tile-config-1-*.json | head -n 1)"
-     if [ "$APP_KEYW_THR" = "y" ]; then
-       filename="${CHIP_FILE%.*}"
-       mv ${CHIP_FILE} ${filename}_${KEYW_THR}.json
-       CHIP_FILE="${filename}_${KEYW_THR}.json"
-     fi
+     echo "${CHIP_FILE}"
      mkdir -p ${log_directory}/configs
      mv ${CHIP_FILE} ${log_directory}/configs
    done
   fi
+
   if [ "$dif_thresh_files" = false ]; then
     DIRECTORY=${log_directory}configs/
+=======
+  if [[ "$DIFFERENT_CONFIG_FILES_FLAG" = false && "$RUN_THRESHOLD" = true ]]; then
+    DIRECTORY=${log_directory}/configs
   fi
 echo '\n------------------------\n '
 
@@ -420,36 +421,33 @@ do
   i_start=$((i_start + 1))
   #Date and Time when start_run_log_raw.py starts running
   DATE_TIME_RUN_START=$(date +"%Y_%m_%d_%H-%M_CT")
-  DATE_SECONDS_RUN_START=$(date +"%s")
+  DATE_SECONDS_RUN_START=$(date +"%S")
 
   echo "\n------ Attempt: $i_start ------"
   python3 start_run_log_raw.py --config_name ${DIRECTORY} --controller_config ${CONFIG_FILENAME} --outdir ${log_directory} --runtime 60 >> start.log  2>&1
 
-  if [ "$(sed '11q;d' start.log)" = '[FINISH BASE]' ];then
+  if [ "$(sed '9q;d' start.log)" = '[FINISH BASE]' ];then
     echo '\nSuccess! \n'
     DATE_TIME_RUN_END=$(date +"%Y_%m_%d_%H-%M_CT")
-    DATE_SECONDS_RUN_END=$(date +"%s")
+    DATE_SECONDS_RUN_END=$(date +"%S")
     DURATION=$((DATE_SECONDS_RUN_END - DATE_SECONDS_RUN_START))
 
-    echo "\nAttempt $i_start ran for ${DURATION} seconds"
-    echo "This attempt ran for ${DURATION} seconds" >> start.log
+    echo "\nAttempt $i_start ran for $DURATION seconds"
+    echo "This attempt ran for $DURATION seconds" >> start.log
     mv start.log successful_start_attempt_${i_start}_${DATE_TIME_RUN_START}.log #rename the start_run file based on the run's information
     mv successful_start_attempt_${i_start}_${DATE_TIME_RUN_START}.log ${log_directory} #move the file to the log directory
     RUN_START_RUN=false
-    entry_run="$(ls -t ./*.h5 | head -n 1)"
-    mv ${entry_run} ${log_directory}
   else
     DATE_TIME_RUN_END=$(date +"%Y_%m_%d_%H-%M_CT")
-    DATE_SECONDS_RUN_END=$(date +"%s")
+    DATE_SECONDS_RUN_END=$(date +"%S")
     DURATION=$((DATE_SECONDS_RUN_END - DATE_SECONDS_RUN_START))
-    echo "\nAttempt $i_start ran for ${DURATION} seconds"
-    echo "This attempt ran for ${DURATION} seconds" >> start.log
+    echo "\nAttempt $i_threshold ran for $DURATION seconds"
+    echo "This attempt ran for $DURATION seconds" >> start.log
+    sed '13q;d'  start.log
     mv start.log failed_start_attempt_${i_start}_${DATE_TIME_RUN_START}.log #rename the start_run file based on the run's information
     mv failed_start_attempt_${i_start}_${DATE_TIME_RUN_START}.log ${log_directory} #move the file to the log directory
     echo '\nFailure! Trying again...'
   fi
 done
-
-cd /Users/tinytpc/GitCode/TinyTPC/3x3ops
 
 echo '\n------------------------'
