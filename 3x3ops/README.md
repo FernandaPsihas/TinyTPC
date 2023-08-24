@@ -19,3 +19,4 @@ Regarding the user inputs [they should be provided with their full path], the pr
 
 
 test(https).
+test(submission via workstation mac)
