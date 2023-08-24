@@ -16,3 +16,6 @@ All output files of these scripts are stored in the local_directory. More specif
 
 
 Regarding the user inputs [they should be provided with their full path], the program checks if they exist locally, if they are in the right format (.json and .h5 for the threshold_qc.py inputs and .json for the start_run_log_raw.py inputs) and the same date as the program's execution. Additionally, for the start_run_log_raw.py inputs checks if a configuration file has been submitted for each chip id.
+
+
+test.
