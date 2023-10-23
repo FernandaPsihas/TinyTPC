@@ -2,8 +2,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import h5py
 import numpy as np
+from matplotlib.colors import Normalize
 import argparse
 import seaborn as sns
+from matplotlib.colors import LogNorm, Normalize
 import matplotlib.cm as cm
 from matplotlib.backends.backend_pdf import PdfPages
 import os
@@ -25,7 +27,6 @@ a_5 = 0.2053
 mu = ((a_0 + a_1*E + a_2*E**(3/2) + a_3*E**(5/2))/(1+(a_1/a_0)*E + a_4*E**2 + a_5*E**3))*(T/T_0)**(-3/2) #cm^2/V/s
 v = mu*E*1000 #cm/s
 drift_time = (d/v)*1e7 #0.1 us
-
 
 def parse_json(json_filename):
     f = open(json_filename)
@@ -54,12 +55,12 @@ def channel_mask():
         d[chip_id] = channel_mask
     
     os.chdir(dir) 
-    return d
+    return(d)
 
 
 def plot_xy_selected(filename, start_time, end_time):
     
-    fig = plt.figure(figsize=(7, 11))
+    fig = plt.figure(figsize=(7, 8))
     spec = fig.add_gridspec(3, 2)
     
     ax0 = fig.add_subplot(spec[0, 0])
@@ -72,8 +73,10 @@ def plot_xy_selected(filename, start_time, end_time):
     
     ax = [ax0, ax1, ax2, ax3, ax4]
 
-    f = h5py.File(filename,'r')
 
+    f = h5py.File(filename,'r')
+    
+    
     df = pd.DataFrame(f['packets'][:])
     df = df.loc[df['packet_type'] == 0]
     df = df.loc[df['valid_parity'] == 1]
@@ -81,17 +84,21 @@ def plot_xy_selected(filename, start_time, end_time):
     chip12 = df.loc[df['chip_id'] == 12]
     min_time = min(chip12['timestamp'])
 
-    channel_array = np.array([[ 3,  2,  1, 63, 62, 61, 60],
-                              [10,  5,  4,  0, 59, 58, 52],
-                              [13, 12, 11, 49, 50, 51, 53],
-                              [17, 16, 15, 14, 46, 47, 48],
-                              [20, 21, 18, 42, 43, 44, 45],
-                              [19, 26, 27, 32, 36, 37, 41],
-                              [28, 29, 30, 31, 33, 34, 35]])
+    channel_array = np.array([[28, 19, 20, 17, 13, 10,  3],
+                              [29, 26, 21, 16, 12,  5,  2],
+                              [30, 27, 18, 15, 11,  4,  1],
+                              [31, 32, 42, 14, 49,  0, 63],
+                              [33, 36, 43, 46, 50, 59, 62],
+                              [34, 37, 44, 47, 51, 58, 61],
+                              [35, 41, 45, 48, 53, 52, 60]])
+    
+    #chip_array = np.array([[14, 13, 12],
+    #                       [24, 23, 22],
+    #                       [34, 33, 32]])
 
-    chip_array = np.array([[12, 22, 32],
-                           [13, 23, 33],
-                           [14, 24, 34]])
+    chip_array = np.array([[12, 13, 14],
+                           [22, 23, 24],
+                           [32, 33, 34]])
 
     adc_data = np.arange(441).reshape((21, 21))
     time_data = np.arange(441).reshape((21, 21))
@@ -99,7 +106,7 @@ def plot_xy_selected(filename, start_time, end_time):
 
     df_cut = df[(df['timestamp']-min_time).between(start_time*1e7, (end_time)*1e7)]
     
-    date = filename[17:]
+    date = filename[13:]
     date = f'{date[5:7]}/{date[8:10]} {date[11:13]}:{date[14:16]}:{date[17:19]}'
 
     fig.suptitle(f'{date} \n {(min(df_cut["timestamp"])-min_time)*1e-7} s - {(max(df_cut["timestamp"])-min_time)*1e-7} s', 
@@ -115,18 +122,20 @@ def plot_xy_selected(filename, start_time, end_time):
         ax[i].axis('off')
         ax[i].hlines([0, 7, 14, 21], 0, 21, color = 'black', lw = 1)
         ax[i].vlines([0, 7, 14, 21], 0, 21, color = 'black', lw = 1)
+
+        # ax[i].annotate('14', xy = [3.5, 3.5], ha='center', va='center')
+        # ax[i].annotate('13', xy = [10.5, 3.5], ha='center', va='center')
+        # ax[i].annotate('12', xy = [17.5, 3.5], ha='center', va='center')
         
-        # ax[i].annotate('12', xy = [3.5, 3.5], ha='center', va='center')
-        # ax[i].annotate('13', xy = [3.5, 10.5], ha='center', va='center')
-        # ax[i].annotate('14', xy = [3.5, 17.5], ha='center', va='center')
-        
-        # ax[i].annotate('22', xy = [10.5, 3.5], ha='center', va='center')
+        # ax[i].annotate('24', xy = [3.5, 10.5], ha='center', va='center')
         # ax[i].annotate('23', xy = [10.5, 10.5], ha='center', va='center')
-        # ax[i].annotate('24', xy = [10.5, 17.5], ha='center', va='center')
+        # ax[i].annotate('22', xy = [17.5, 10.5], ha='center', va='center')
         
-        # ax[i].annotate('32', xy = [17.5, 3.5], ha='center', va='center')
-        # ax[i].annotate('33', xy = [17.5, 10.5], ha='center', va='center')
-        # ax[i].annotate('34', xy = [17.5, 17.5], ha='center', va='center')
+        # ax[i].annotate('34', xy = [3.5, 17.5], ha='center', va='center')
+        # ax[i].annotate('33', xy = [10.5, 17.5], ha='center', va='center')
+        # ax[i].annotate('32', xy = [17.5, 17.5], ha='center', va='center')
+
+    # print(max(df['timestamp'])-min(df['timestamp']))
 
     func = lambda x: (x)/drift_time
     inv = lambda x: (x)*drift_time
@@ -146,20 +155,20 @@ def plot_xy_selected(filename, start_time, end_time):
     ax[4].hist([t - min_time for t in df_cut['timestamp']], bins = 20,
                histtype=u'step', color=cm.plasma(0.7))
 
-    i = 0
     dit = channel_mask()
-    for chip_lst in chip_array:
+    i = 0
+    for chip_lst in chip_array:    
         for channel_lst in channel_array:
             for chip_id in chip_lst:
                 chip = df_cut.loc[df_cut['chip_id'] == chip_id]
                 a, b = np.where(chip_array == chip_id)
                 c = 2*a[0]+b[0]
-                
+
                 if chip_id in dit.keys():
                     masked = dit[chip_id]
                 else:
                     masked = None
-                    
+
                 for channel_id in range(len(channel_lst)):
                     x = int(i/3)
                     y = (i*7)%21 + channel_id
@@ -169,12 +178,12 @@ def plot_xy_selected(filename, start_time, end_time):
                     adc = list(channel['dataword'])
                     time = list(channel['timestamp'])
                     time = [t - min_time for t in time]
-                    
+
                     if masked != None:
                         masked_data[x][y] = masked[channel_lst[channel_id]]
                     else:
                         masked_data[x][y] = 0
-                        
+
                     if len(adc) == 0:
                         adc_data[x][y] = 0
                         time_data[x][y] = 0
@@ -190,24 +199,25 @@ def plot_xy_selected(filename, start_time, end_time):
     min_adc = np.min(adc_data[np.nonzero(adc_data)])
     min_time = np.min(time_data[np.nonzero(time_data)])
 
-    sns.heatmap(masked_data, vmin = 0, vmax = 3, cmap = 'Greys', cbar = False, 
-                    linewidths = 0.1, ax=ax[0])
-    sns.heatmap(masked_data, vmin = 0, vmax = 3, cmap = 'Greys', cbar = False,
-                    linewidths = 0.1, ax=ax[1])
-
-    sns.heatmap(adc_data, mask = data_mask, vmin = min_adc, cmap = 'plasma', 
-                    linewidths = 0.1, ax=ax[0], linecolor='darkgray', cbar_kws={'label': 'ADC'})
-    sns.heatmap(time_data, mask = data_mask, vmin = min_time, cmap = 'plasma', 
-                    linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'Time'})
-        # plt.savefig('selected_xy.png')
+    sns.heatmap(masked_data, vmin = 0, vmax = 3, cmap = 'Greys', 
+                    linewidths = 0.1, ax=ax[0], cbar = False)
+    sns.heatmap(masked_data, vmin = 0, vmax = 3, cmap = 'Greys', 
+                    linewidths = 0.1, ax=ax[1], cbar = False)
     
-
+    sns.heatmap(adc_data, mask = data_mask, vmin = min_adc, cmap = 'plasma_r', 
+                    linewidths = 0.1, ax=ax[0], linecolor='darkgray', cbar_kws={'label': 'ADC'})
+    sns.heatmap(time_data, mask = data_mask, vmin = min_time, cmap = 'plasma_r', 
+                    linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'Time'})
+        
+        # plt.savefig('selected_xy.png')
+        
+        
 def main(filename, adc=10):
     bins = 10000
     
     f = h5py.File(filename,'r')
     
-    date = filename[17:]
+    date = filename[13:]
     date = f'{date[5:7]}_{date[8:10]}_{date[11:13]}-{date[14:16]}-{date[17:19]}'
     
     df = pd.DataFrame(f['packets'][:])
@@ -231,26 +241,29 @@ def main(filename, adc=10):
             can.append([t_min, t_max])
     
     print(len(can), 'potential tracks!')
-    
-    fig_nums = []
-    for i in range(len(can)):
-        start_time = can[i][0]/1e7
-        end_time = can[i][1]/1e7
-        plot_xy_selected(filename, start_time, end_time)
-        fig_nums.append(plt.gcf().number)
-        print(i+1, 'done!')
+    if len(can) > 20:
+        print("i'm not doing that.")
+
+    else:
+        fig_nums = []
+        for i in range(len(can)):
+            start_time = can[i][0]/1e7
+            end_time = can[i][1]/1e7
+            plot_xy_selected(filename, start_time, end_time)
+            fig_nums.append(plt.gcf().number)
+            print(i+1, 'done!')
         
-    p = PdfPages(f'all_tracks_{date}.pdf') 
-    figs = [plt.figure(n) for n in fig_nums] 
+        p = PdfPages(f'all_tracks_{date}.pdf') 
+        figs = [plt.figure(n) for n in fig_nums] 
  
-    for fig in figs:  
-        fig.savefig(p, format='pdf')  
-    plt.close('all')  
-    p.close()
+        for fig in figs:  
+            fig.savefig(p, format='pdf')  
+        plt.close('all')  
+        p.close()
+   
+        print(f'all_tracks_{date}.pdf', 'FINISHED!!!')
     
-    print('FINISHED!!!')
-    
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', type=str, help='''Input hdf5 file''')
     parser.add_argument('--adc', default=10, type=int, help='''ADC cutoff for potential tracks (default = 10)''')
