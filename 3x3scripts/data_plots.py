@@ -1,160 +1,139 @@
 import matplotlib.pyplot as plt
 import h5py
-import yaml
 import numpy as np
-from matplotlib.patches import Rectangle
-from matplotlib.colors import Normalize
 import matplotlib.cm as cm
 import pandas as pd
-from matplotlib.lines import Line2D
+# from matplotlib.lines import Line2D
+import seaborn as sns
+from matplotlib.backends.backend_pdf import PdfPages
+import argparse
 
-def find_channel_id(u): 
-    return u % 64
-
-
-def find_chip_id(u): 
-    return (u//64) % 256
-
-
-def unique_channel_id(d): 
-    return((d['io_group'].astype(int)*256+d['io_channel'].astype(int))*256 
-           + d['chip_id'].astype(int))*64 + d['channel_id'].astype(int)
 
 
 def parse_file(filename):
     """
-    Reads the .h5 file from the pedestal run and turns it into a readable format.
-
+    Reads the .h5 file from the data run and turns it into a readable dataframe
     Parameters
     ----------
     filename : str
-        Name of the pedestal file.
+        Name of the data file.
 
     Returns
     -------
-    d : dict
-        Contains the ADC mean, standard, and rate of each channel.
+    df : DataFrame
+        Dataframe containing all data
+    date: str
+        String containing the date
 
     """
-    d = dict()
     f = h5py.File(filename,'r')
-    unixtime=f['packets'][:]['timestamp'][f['packets'][:]['packet_type']==4]
-    livetime = np.max(unixtime)-np.min(unixtime)
-    data_mask = f['packets'][:]['packet_type']==0
-    valid_parity_mask = f['packets'][:]['valid_parity']==1
-    mask = np.logical_and(data_mask, valid_parity_mask)
-    adc = f['packets']['dataword'][mask]
-    unique_id = unique_channel_id(f['packets'][mask])
-    unique_id_set = np.unique(unique_id)
-    for i in unique_id_set:
-        id_mask = unique_id == i
-        masked_adc = adc[id_mask]
-        d[i]=dict(
-            mean = np.mean(masked_adc),
-            std = np.std(masked_adc),
-            rate = len(masked_adc) / (livetime + 1e-9) )
-    return d
+
+    df = pd.DataFrame(f['packets'][:])
+    df = df.loc[df['packet_type'] == 0]
+    df = df.loc[df['valid_parity'] == 1]
+    
+    date = filename[13:32]
+    return df, date
 
 
-def plot_xy(d, metric, tile_id):
+def plot_xy_and_key(df, date):
     """
-    Creates a 2d histogram of the ADC for each channel.
+    Creates a 2d histogram plot the mean ADC, std ADC, and rate for each channel and a key showing the channel colors for the trigger/time plots.
 
     Parameters
     ----------
-    d : dict
-        Dictionary produced by parse_file.
-    metric : str
-        Metric of ADC to plot. Options are mean, std, and rate.
-    tile_id : int
-        Id of the tile.
+    df : dataframe
+        Dataframe produced by parse_file.
+    date : str
+        Date produced by parse_file.
 
     Returns
     -------
     None.
 
     """
-    geometry_yaml = 'layout-2.2.1.yaml'
-    with open(geometry_yaml) as fi: geo = yaml.full_load(fi)
-    pitch = 4.434
-
-    chip_pix = dict((geo['chips'][i][0], geo['chips'][i][1]) for i in range(len(geo['chips'])))
-
-    ch_vertical_lines=np.linspace(-1*(geo['width']/2), geo['width']/2, 22)
-    ch_horizontal_lines=np.linspace(-1*(geo['height']/2), geo['height']/2, 22)
-
-    vertical_lines=np.linspace(-1*(geo['width']/2), geo['width']/2, 4)
-    horizontal_lines=np.linspace(-1*(geo['height']/2), geo['height']/2, 4)
-
-    nonrouted_v2a_channels=[6,7,8,9,22,23,24,25,38,39,40,54,55,56,57]
-    routed_v2a_channels=[i for i in range(64) if i not in nonrouted_v2a_channels]
-
-    fig, ax = plt.subplots(figsize=(10,8))
-    ax.set_xlabel('X Position [mm]'); ax.set_ylabel('Y Position [mm]')
-    ax.set_xticks(vertical_lines); ax.set_yticks(horizontal_lines)
-    ax.set_xlim(vertical_lines[0]*1.1, vertical_lines[-1]*1.1)
-    ax.set_ylim(horizontal_lines[0]*1.1, horizontal_lines[-1]*1.1)
-
-    for vl in vertical_lines:
-        ax.vlines(x=vl, ymin=horizontal_lines[0], ymax=horizontal_lines[-1], colors=['k'], linestyle='solid')
-    for hl in horizontal_lines:
-        ax.hlines(y=hl, xmin=vertical_lines[0], xmax=vertical_lines[-1], colors=['k'], linestyle='solid')
+    fig, ax = plt.subplots(1, 4, figsize=(16,3.5))
+    date_str = f'{date[5:7]}/{date[8:10]} {date[11:13]}:{date[14:16]}:{date[17:]}'
+    plt.suptitle(f'Data {date_str}')
+    
+    for i in range(3):
+        ax[i].axis('off')
+        ax[i].hlines([0, 7, 14, 21], 0, 21, color = 'black', lw = 1)
+        ax[i].vlines([0, 7, 14, 21], 0, 21, color = 'black', lw = 1)
         
-    for chvl in ch_vertical_lines:
-        ax.vlines(x=chvl, ymin=ch_horizontal_lines[0], ymax=ch_horizontal_lines[-1], colors=['k'], alpha=0.15)
-    for chhl in ch_horizontal_lines:
-        ax.hlines(y=chhl, xmin=ch_vertical_lines[0], xmax=ch_vertical_lines[-1], colors=['k'], alpha=0.15)
-
-    chipid_pos = dict()
-    for chipid in chip_pix.keys():
-        x,y = [[] for i in range(2)]
-        for channelid in routed_v2a_channels:
-            x.append( geo['pixels'][chip_pix[chipid][channelid]][1] )
-            y.append( geo['pixels'][chip_pix[chipid][channelid]][2] )
-        avgX = (max(x)+min(x))/2.
-        avgY = (max(y)+min(y))/2.
-        chipid_pos[chipid]=dict(minX=min(x), maxX=max(x), avgX=avgX, minY=min(y), maxY=max(y), avgY=avgY)
-        plt.annotate(str(chipid), [avgX,avgY], ha='center', va='center')
-
-    valid_chip_ids = [14, 13, 12, 24, 23, 22, 34, 33, 32]
-    for key in d.keys():
-        channel_id = find_channel_id(key)
-        chip_id = find_chip_id(key)
-        if chip_id not in valid_chip_ids: continue
-        if channel_id in nonrouted_v2a_channels: continue
-        if channel_id not in range(64): continue
-        x = geo['pixels'][chip_pix[chip_id][channel_id]][1]
-        y = geo['pixels'][chip_pix[chip_id][channel_id]][2]
+        ax[i].annotate('12', xy = [3.5, 3.5], ha='center', va='center')
+        ax[i].annotate('13', xy = [10.5, 3.5], ha='center', va='center')
+        ax[i].annotate('14', xy = [17.5, 3.5], ha='center', va='center')
         
-        if metric=='mean':
-            normalization=255
-        if metric=='std':
-            normalization=10
-        if metric=='rate':
-            normalization=1
+        ax[i].annotate('22', xy = [3.5, 10.5], ha='center', va='center')
+        ax[i].annotate('23', xy = [10.5, 10.5], ha='center', va='center')
+        ax[i].annotate('24', xy = [17.5, 10.5], ha='center', va='center')
         
-        weight = d[key][metric]/normalization
-        # if weight > 1: weight = 0.9999
-        r = Rectangle((x-(pitch/2.), y-(pitch/2.)), pitch, pitch, color=cm.YlGnBu(weight))
-        plt.gca().add_patch( r )
+        ax[i].annotate('32', xy = [3.5, 17.5], ha='center', va='center')
+        ax[i].annotate('33', xy = [10.5, 17.5], ha='center', va='center')
+        ax[i].annotate('34', xy = [17.5, 17.5], ha='center', va='center')
+    
+    ax[0].set_title('Mean ADC')
+    ax[1].set_title('STD ADC')
+    ax[2].set_title('Rate')
+    ax[3].set_title('Channel Key')
+    ax[3].axis('off')
+    fig.set_tight_layout(True)
+    
+    chip12 = df.loc[df['chip_id'] == 12]
+    livetime = (max(chip12['timestamp'])-min(chip12['timestamp']))/1e7
+    
+    channel_array = np.array([[28, 19, 20, 17, 13, 10,  3],
+                              [29, 26, 21, 16, 12,  5,  2],
+                              [30, 27, 18, 15, 11,  4,  1],
+                              [31, 32, 42, 14, 49,  0, 63],
+                              [33, 36, 43, 46, 50, 59, 62],
+                              [34, 37, 44, 47, 51, 58, 61],
+                              [35, 41, 45, 48, 53, 52, 60]])
 
-    colorbar = fig.colorbar(cm.ScalarMappable(norm=Normalize(vmin=0, vmax=normalization), cmap='YlGnBu'), ax=ax)
+    chip_array = np.array([[12, 13, 14],
+                           [22, 23, 24],
+                           [32, 33, 34]])
 
-    if metric=='mean':
-        ax.set_title('ADC Mean')
-        colorbar.set_label('[ADC]')
-        plt.savefig('tile-id-'+str(tile_id)+'-xy-mean.png')
-    if metric=='std':
-        ax.set_title('ADC RMS')
-        colorbar.set_label('[ADC]')
-        plt.savefig('tile-id-'+str(tile_id)+'-xy-std.png')
-    if metric=='rate':
-        ax.set_title('Trigger Rate')
-        colorbar.set_label('[Hz]')
-        plt.savefig('tile-id-'+str(tile_id)+'-xy-rate.png')
-        
+    mean_data = np.arange(441).reshape((21, 21))
+    std_data = np.arange(441).reshape((21, 21))
+    rate_data = np.arange(441).reshape((21, 21))
 
-def plot_adc_trigger(filename):
+    i = 0
+    for chip_lst in chip_array:
+        for channel_lst in channel_array:
+            for chip_id in chip_lst:
+                chip = df.loc[df['chip_id'] == chip_id]
+                    
+                for channel_id in range(len(channel_lst)):
+                    x = int(i/3)
+                    y = (i*7)%21 + channel_id
+
+                    channel = chip.loc[chip['channel_id']==channel_lst[channel_id]]
+                    
+                    adc = list(channel['dataword'])
+                        
+                    if len(adc) == 0:
+                        mean_data[x][y] = 0
+                        std_data[x][y] = 0
+                        rate_data[x][y] = 0
+                    else:
+                        mean_data[x][y] = np.mean(adc)
+                        std_data[x][y] = np.std(adc)
+                        rate_data[x][y] = len(adc)/livetime
+                i += 1
+    
+    sns.heatmap(mean_data, vmin = 0, cmap = 'YlGnBu', 
+                    linewidths = 0.1, ax=ax[0], linecolor='darkgray', cbar_kws ={'label': 'Mean ADC'})
+    sns.heatmap(std_data, vmin = 0,  cmap = 'YlGnBu',  
+                    linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'Std ADC'})
+    sns.heatmap(rate_data, vmin = 0, cmap = 'YlGnBu',
+                    linewidths = 0.1, ax=ax[2], linecolor='darkgray', cbar_kws={'label': 'Rate'})
+    sns.heatmap(channel_array, vmin = 0, cmap = 'viridis',
+                    linewidths = 0.1, ax=ax[3], linecolor='darkgray', cbar_kws={'label': 'Channel #'})
+    
+    
+def plot_adc_trigger(df, date = ''):
     """
     Creates a 3x3 histogram plot of the ADC of every channel from each chip.
 
@@ -168,14 +147,9 @@ def plot_adc_trigger(filename):
     None.
 
     """
-    f = h5py.File(filename,'r')
 
-    fig, ax = plt.subplots(3,3, figsize=(32, 16), sharex = True, sharey = True)
+    fig, ax = plt.subplots(3,3, figsize=(16, 8), sharex=True)
     fig.set_tight_layout(True)
-
-    df = pd.DataFrame(f['packets'][:])
-    df = df.loc[df['packet_type'] == 0]
-    df = df.loc[df['valid_parity'] == 1]
 
     nonrouted_v2a_channels=[6,7,8,9,22,23,24,25,38,39,40,54,55,56,57]
     routed_v2a_channels=[i for i in range(64) if i not in nonrouted_v2a_channels]
@@ -189,25 +163,24 @@ def plot_adc_trigger(filename):
             channel = list(channel['dataword'])
             weight = chan_id/64
             
-            ax[i%3][i//3].hist(channel, bins = np.linspace(0, 250, 251), log=True, histtype=u'step',
+            ax[i%3][i//3].hist(channel, bins = np.linspace(0, 260, 261), log=True, histtype=u'step',
                                alpha = 0.8, color=cm.viridis(weight), lw = 0.5)
             ax[i%3][i//3].grid(alpha = 0.5)
             
             if channel.count(255) > 0.5*len(channel):
                 labels.append(chan_id)
-                colors.append(cm.viridis(weight))
+                colors.append(cm.plasma(weight))
         
-        lines = [Line2D([0], [0], color=colors[i]) for i in range(len(colors))]
+        # lines = [Line2D([0], [0], color=colors[i]) for i in range(len(colors))]
         
         ax[i%3][i//3].set_title(f'chip {cids[i]}')
         ax[i%3][i//3].set_xlabel('ADC')
         ax[i%3][i//3].set_ylabel('trigger count')
         # ax[i%3][i//3].legend(lines, labels, loc='upper left')
-        # ax[i%3][i//3].tick_params(axis='both', labelsize=6)
-        plt.savefig('adc_trigger.png')
+        # plt.savefig(f'adc_trigger_{date}.png')
         
         
-def plot_adc_time(filename):
+def plot_adc_time(df, date = ''):
     """
     Creates a plot of the ADC vs. the time for every channel on each chip
 
@@ -221,19 +194,15 @@ def plot_adc_time(filename):
     None.
 
     """
-    f = h5py.File(filename,'r')
-
-    df = pd.DataFrame(f['packets'][:])
-    df = df.loc[df['packet_type'] == 0]
-    df = df.loc[df['valid_parity'] == 1]
+    
     cids = [12, 13, 14, 22, 23, 24, 32, 33, 34]
 
     nonrouted_v2a_channels=[6,7,8,9,22,23,24,25,38,39,40,54,55,56,57]
     routed_v2a_channels=[i for i in range(64) if i not in nonrouted_v2a_channels]
 
-    fig, ax = plt.subplots(3, 3, figsize=(32, 16), sharex = True, sharey=True)
+    fig, ax = plt.subplots(3, 3, figsize=(16, 8), sharex = True, sharey=True)
     fig.set_tight_layout(True)
-    markers = ['.', 'o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X']
+    # markers = ['.', 'o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X']
 
     for i in range(len(cids)):
         chip = df.loc[df['chip_id'] == cids[i]]
@@ -243,193 +212,44 @@ def plot_adc_time(filename):
             adc = list(channel['dataword'][:])
             time = [i - min_time for i in list(channel['timestamp'][:])]
             weight = routed_v2a_channels[ch]/64
-            ax[i%3][i//3].scatter(time, adc, color=cm.viridis(weight), 
-                               alpha = 0.9, marker = markers[ch%15], s = 0.7)
-            # ax[i%3][i//3].plot(time, adc, color=cm.viridis(weight), 
-            #                    alpha = 0.9, lw = 0.5)
+            ax[i%3][i//3].scatter(time, adc, s = 0.8, color=cm.viridis(weight), 
+                               alpha = 0.9)
+            ax[i%3][i//3].plot(time, adc, lw = 0.5, color=cm.viridis(weight), 
+                               alpha = 0.9)
+            
             
         ax[i%3][i//3].set_title(f'chip {cids[i]}')
-        ax[i%3][i//3].tick_params(axis='both')
-        ax[i%3][i//3].set_xlabel('Time [0.1 us]')
+        ax[i%3][i//3].set_xlabel('Time')
         ax[i%3][i//3].set_ylabel('ADC')
         ax[i%3][i//3].grid(alpha = 0.5)
 
-    plt.savefig('adc_time.png')
+    # plt.savefig(f'adc_time_{date}.png')
     
+
+def main(filename):
+    df, date = parse_file(filename)
     
-def channel_colors():
-    """
-    Creates a plot color coding the channels on a chip.
-
-    Returns
-    -------
-    None.
-
-    """
-    channel_array = np.array([[ 3,  2,  1, 63, 62, 61, 60],
-                              [10,  5,  4,  0, 59, 58, 52],
-                              [13, 12, 11, 49, 50, 51, 53],
-                              [17, 16, 15, 14, 46, 47, 48],
-                              [20, 21, 18, 42, 43, 44, 45],
-                              [19, 26, 27, 32, 36, 37, 41],
-                              [28, 29, 30, 31, 33, 34, 35]])
-
-    fig, ax = plt.subplots(figsize=(10,8))
-    ax.axis('off')
-
-    vertical_lines=np.linspace(-0.5, 6.5, 8)
-    horizontal_lines=np.linspace(-6.5, 0.5, 8)
-
-    for vl in vertical_lines:
-        ax.vlines(x=vl, ymin=horizontal_lines[0], ymax=horizontal_lines[-1], colors=['k'], linestyle='solid')
-    for hl in horizontal_lines:
-        ax.hlines(y=hl, xmin=vertical_lines[0], xmax=vertical_lines[-1], colors=['k'], linestyle='solid')
-
-    for channel_col in range(len(channel_array)):
-        for channel_row in range(len(channel_array[channel_col])):
-            x = channel_row
-            y = -channel_col
-            weight = channel_array[channel_col][channel_row]/64
-            ax.text(x, y, channel_array[channel_col][channel_row], va='center', ha='center')
-            r = Rectangle((x-0.5, y-0.5) , 1, 1, color=cm.viridis(weight))
-            plt.gca().add_patch(r)
-
-    fig.colorbar(cm.ScalarMappable(norm=Normalize(vmin=0, vmax=64), cmap='viridis'), ax=ax)
-    plt.savefig('channel_colors.png')
+    fig_nums = []
+    plot_xy_and_key(df, date)
+    fig_nums.append(plt.gcf().number)
+    plot_adc_trigger(df)
+    fig_nums.append(plt.gcf().number)
+    plot_adc_time(df)
+    fig_nums.append(plt.gcf().number)
     
-def plot_xy_and_key(filename):
-    """
-    Creates a 2d histogram of the mean ADC, RMS ADC, and rate for each channel. 
-    Also plots the key showing the channel colors for the trigger/time plots
+    output_filename = f'data_{date}.pdf'
+    p = PdfPages(output_filename) 
+    figs = [plt.figure(n) for n in fig_nums] 
+ 
+    for fig in figs:  
+        fig.savefig(p, format='pdf')  
+    plt.close('all')  
+    p.close()
+    print(output_filename, 'Finished!')
 
-    Parameters
-    ----------
-    filename : str
-        Name of the pedestal file.
 
-    Returns
-    -------
-    None.
-
-    """
-    
-    d = parse_file(filename)
-    geometry_yaml = 'layout-2.2.1.yaml'
-    metrics = ['mean', 'std', 'rate']
-    with open(geometry_yaml) as fi: geo = yaml.full_load(fi)
-    pitch = 4.434
-
-    chip_pix = dict((geo['chips'][i][0], geo['chips'][i][1]) for i in range(len(geo['chips'])))
-
-    ch_vertical_lines=np.linspace(-1*(geo['width']/2), geo['width']/2, 22)
-    ch_horizontal_lines=np.linspace(-1*(geo['height']/2), geo['height']/2, 22)
-
-    vertical_lines=np.linspace(-1*(geo['width']/2), geo['width']/2, 4)
-    horizontal_lines=np.linspace(-1*(geo['height']/2), geo['height']/2, 4)
-
-    nonrouted_v2a_channels=[6,7,8,9,22,23,24,25,38,39,40,54,55,56,57]
-    routed_v2a_channels=[i for i in range(64) if i not in nonrouted_v2a_channels]
-
-    fig, ax = plt.subplots(1, 4, figsize=(32, 6))
-    fig.set_tight_layout(True)
-    for i in range(4):
-        ax[i].axis('off')
-    
-    for i in range(3):
-        # ax[i].axis('off')
-        # ax[i].set_xlabel('X Position [mm]'); ax[i].set_ylabel('Y Position [mm]')
-        # ax[i].set_xticks(vertical_lines); ax[i].set_yticks(horizontal_lines)
-        ax[i].set_xlim(vertical_lines[0]*1.1, vertical_lines[-1]*1.1)
-        ax[i].set_ylim(horizontal_lines[0]*1.1, horizontal_lines[-1]*1.1)
-    
-        for vl in vertical_lines:
-            ax[i].vlines(x=vl, ymin=horizontal_lines[0], ymax=horizontal_lines[-1], colors=['k'], linestyle='solid')
-        for hl in horizontal_lines:
-            ax[i].hlines(y=hl, xmin=vertical_lines[0], xmax=vertical_lines[-1], colors=['k'], linestyle='solid')
-            
-        for chvl in ch_vertical_lines:
-            ax[i].vlines(x=chvl, ymin=ch_horizontal_lines[0], ymax=ch_horizontal_lines[-1], colors=['k'], alpha=0.15)
-        for chhl in ch_horizontal_lines:
-            ax[i].hlines(y=chhl, xmin=ch_vertical_lines[0], xmax=ch_vertical_lines[-1], colors=['k'], alpha=0.15)
-    
-        chipid_pos = dict()
-        for chipid in chip_pix.keys():
-            x,y = [[] for i in range(2)]
-            for channelid in routed_v2a_channels:
-                x.append(geo['pixels'][chip_pix[chipid][channelid]][1])
-                y.append(geo['pixels'][chip_pix[chipid][channelid]][2])
-            avgX = (max(x)+min(x))/2.
-            avgY = (max(y)+min(y))/2.
-            chipid_pos[chipid]=dict(minX=min(x), maxX=max(x), avgX=avgX, minY=min(y), maxY=max(y), avgY=avgY)
-            ax[i].annotate(str(chipid), [avgX,avgY], ha='center', va='center')
-    
-        valid_chip_ids = [14, 13, 12, 24, 23, 22, 34, 33, 32]
-        for key in d.keys():
-            channel_id = find_channel_id(key)
-            chip_id = find_chip_id(key)
-            if chip_id not in valid_chip_ids: continue
-            if channel_id in nonrouted_v2a_channels: continue
-            if channel_id not in range(64): continue
-            x = geo['pixels'][chip_pix[chip_id][channel_id]][1]
-            y = geo['pixels'][chip_pix[chip_id][channel_id]][2]
-            
-            if metrics[i]=='mean':
-                normalization=40
-            if metrics[i]=='std':
-                normalization=10
-            if metrics[i]=='rate':
-                normalization=2
-
-            
-            weight = d[key][metrics[i]]/normalization
-            r = Rectangle((x-(pitch/2.), y-(pitch/2.)), pitch, pitch, color=cm.YlGnBu(weight) )
-            ax[i].add_patch(r)
-        
-        colorbar = fig.colorbar(cm.ScalarMappable(norm=Normalize(vmin=0, vmax=normalization), 
-                                                  cmap='YlGnBu'), ax=ax[i], orientation="horizontal")
-        colorbar.ax.tick_params(labelsize=6)
-        
-        if metrics[i]=='mean':
-            ax[i].set_title('ADC Mean', fontsize='6')
-            colorbar.set_label('[ADC]', fontsize='6')
-        if metrics[i]=='std':
-            ax[i].set_title('ADC RMS', fontsize='6')
-            colorbar.set_label('[ADC]', fontsize='6')
-        if metrics[i]=='rate':
-            ax[i].set_title('Trigger Rate', fontsize='6')
-            colorbar.set_label('[Hz]', fontsize='6')
-            
-    channel_array = np.array([[ 3,  2,  1, 63, 62, 61, 60],
-                              [10,  5,  4,  0, 59, 58, 52],
-                              [13, 12, 11, 49, 50, 51, 53],
-                              [17, 16, 15, 14, 46, 47, 48],
-                              [20, 21, 18, 42, 43, 44, 45],
-                              [19, 26, 27, 32, 36, 37, 41],
-                              [28, 29, 30, 31, 33, 34, 35]])
-
-    # ax[3].axis('off')
-
-    vertical_lines=np.linspace(-0.5, 6.5, 8)
-    horizontal_lines=np.linspace(-6.5, 0.5, 8)
-
-    for vl in vertical_lines:
-        ax[3].vlines(x=vl, ymin=horizontal_lines[0], ymax=horizontal_lines[-1], colors=['k'], linestyle='solid')
-    for hl in horizontal_lines:
-        ax[3].hlines(y=hl, xmin=vertical_lines[0], xmax=vertical_lines[-1], colors=['k'], linestyle='solid')
-
-    for channel_col in range(len(channel_array)):
-        for channel_row in range(len(channel_array[channel_col])):
-            x = channel_row
-            y = -channel_col
-            weight = channel_array[channel_col][channel_row]/64
-            ax[3].text(x, y, channel_array[channel_col][channel_row], va='center', ha='center')
-            r = Rectangle((x-0.5, y-0.5) , 1, 1, color=cm.viridis(weight))
-            ax[3].add_patch(r)
-    
-    ax[3].set_title('Channel Key', fontsize='6')
-    colorbar = fig.colorbar(cm.ScalarMappable(norm=Normalize(vmin=0, vmax=64), cmap='viridis'), 
-                 ax=ax[3], orientation="horizontal")
-    colorbar.ax.tick_params(labelsize=6)
-    colorbar.set_label('[Channel #]', fontsize='6')
-    plt.savefig('xy_key.png')
-    
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--filename', '-i', type=str, help='''Input data hdf5 file''')
+    args = parser.parse_args()
+    # c = main(**vars(args))
