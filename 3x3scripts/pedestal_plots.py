@@ -252,4 +252,4 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', '-i', type=str, help='''Input pedestal hdf5 file''')
     args = parser.parse_args()
-    # c = main(**vars(args))
+    c = main(**vars(args))
