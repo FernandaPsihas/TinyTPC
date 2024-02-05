@@ -153,7 +153,7 @@ def plot_adc_trigger(df, date = ''):
 
     nonrouted_v2a_channels=[6,7,8,9,22,23,24,25,38,39,40,54,55,56,57]
     routed_v2a_channels=[i for i in range(64) if i not in nonrouted_v2a_channels]
-    cids = [12, 13, 14, 22, 23, 24, 32, 33, 34]
+    cids = [12, 22, 32, 13, 23, 33, 14, 24, 34]
 
     for i in range(len(cids)):
         chip = df.loc[df['chip_id'] == cids[i]]
@@ -195,7 +195,7 @@ def plot_adc_time(df, date = ''):
 
     """
     
-    cids = [12, 13, 14, 22, 23, 24, 32, 33, 34]
+    cids = [12, 22, 32, 13, 23, 33, 14, 24, 34]
 
     nonrouted_v2a_channels=[6,7,8,9,22,23,24,25,38,39,40,54,55,56,57]
     routed_v2a_channels=[i for i in range(64) if i not in nonrouted_v2a_channels]
