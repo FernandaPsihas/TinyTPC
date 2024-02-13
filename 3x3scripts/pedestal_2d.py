@@ -5,6 +5,8 @@ import numpy as np
 import argparse
 import os
 
+#creates a 2d matrix of pedestal values to be subtracted from raw ADC data - needed for xy_tracks_w_ped.py 
+
 def main(filename):
 
     start_time = 0
