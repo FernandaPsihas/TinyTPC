@@ -7,7 +7,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
 import argparse
-
+import re
 
 
 def parse_file(filename):
@@ -32,7 +32,8 @@ def parse_file(filename):
     df = df.loc[df['packet_type'] == 0]
     df = df.loc[df['valid_parity'] == 1]
     
-    date = filename[13:32]
+    regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
+    date = regex.search(filename).group()   
     return df, date
 
 
