@@ -9,7 +9,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 import argparse
 import re
 
-
 def parse_file(filename):
     """
     Reads the .h5 file from the data run and turns it into a readable dataframe
@@ -81,8 +80,7 @@ def plot_xy_and_key(df, date):
     ax[3].axis('off')
     fig.set_tight_layout(True)
     
-    chip12 = df.loc[df['chip_id'] == 12]
-    livetime = (max(chip12['timestamp'])-min(chip12['timestamp']))/1e7
+    livetime = (max(df['timestamp'])-min(df['timestamp']))/1e7
     
     channel_array = np.array([[28, 19, 20, 17, 13, 10,  3],
                               [29, 26, 21, 16, 12,  5,  2],
@@ -96,9 +94,9 @@ def plot_xy_and_key(df, date):
                            [22, 23, 24],
                            [32, 33, 34]])
 
-    mean_data = np.arange(441).reshape((21, 21))
-    std_data = np.arange(441).reshape((21, 21))
-    rate_data = np.arange(441).reshape((21, 21))
+    mean_data = np.zeros(441).reshape((21, 21))
+    std_data = np.zeros(441).reshape((21, 21))
+    rate_data = np.zeros(441).reshape((21, 21))
 
     i = 0
     for chip_lst in chip_array:
@@ -123,14 +121,14 @@ def plot_xy_and_key(df, date):
                         std_data[x][y] = np.std(adc)
                         rate_data[x][y] = len(adc)/livetime
                 i += 1
-    
-    sns.heatmap(mean_data, vmin = 0, cmap = 'YlGnBu', 
+
+    sns.heatmap(mean_data, vmin = 0, cmap = 'YlGnBu', vmax = 180,
                     linewidths = 0.1, ax=ax[0], linecolor='darkgray', cbar_kws ={'label': 'Mean ADC'})
-    sns.heatmap(std_data, vmin = 0,  cmap = 'YlGnBu',  
+    sns.heatmap(std_data, vmin = 0,  cmap = 'YlGnBu', vmax = 50,  
                     linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'Std ADC'})
-    sns.heatmap(rate_data, vmin = 0, cmap = 'YlGnBu',
+    sns.heatmap(rate_data, vmin = 0, cmap = 'YlGnBu', vmax = 0.2,
                     linewidths = 0.1, ax=ax[2], linecolor='darkgray', cbar_kws={'label': 'Rate'})
-    sns.heatmap(channel_array, vmin = 0, cmap = 'viridis',
+    sns.heatmap(channel_array, vmin = 0, cmap = 'viridis', 
                     linewidths = 0.1, ax=ax[3], linecolor='darkgray', cbar_kws={'label': 'Channel #'})
     
     
@@ -149,7 +147,7 @@ def plot_adc_trigger(df, date = ''):
 
     """
 
-    fig, ax = plt.subplots(3,3, figsize=(16, 8), sharex=True)
+    fig, ax = plt.subplots(3,3, figsize=(16, 8), sharex = True, sharey = True)
     fig.set_tight_layout(True)
 
     nonrouted_v2a_channels=[6,7,8,9,22,23,24,25,38,39,40,54,55,56,57]
@@ -221,6 +219,7 @@ def plot_adc_time(df, date = ''):
         ax[i%3][i//3].set_title(f'chip {cids[i]}')
         ax[i%3][i//3].set_xlabel('Time')
         ax[i%3][i//3].set_ylabel('ADC')
+        ax[i%3][i//3].set_ylim(0, 260)
         ax[i%3][i//3].grid(alpha = 0.5)
 
     # plt.savefig(f'adc_time_{date}.png')
@@ -246,7 +245,6 @@ def main(filename):
     plt.close('all')  
     p.close()
     print(output_filename, 'Finished!')
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

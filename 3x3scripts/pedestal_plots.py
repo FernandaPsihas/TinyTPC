@@ -9,7 +9,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 import argparse
 import re
 
-
 def parse_file(filename):
     """
     Reads the .h5 file from the pedestal run and turns it into a readable dataframe
@@ -96,9 +95,9 @@ def plot_xy_and_key(df, date):
                            [22, 23, 24],
                            [32, 33, 34]])
 
-    mean_data = np.arange(441).reshape((21, 21))
-    std_data = np.arange(441).reshape((21, 21))
-    rate_data = np.arange(441).reshape((21, 21))
+    mean_data = np.zeros(441).reshape((21, 21))
+    std_data = np.zeros(441).reshape((21, 21))
+    rate_data = np.zeros(441).reshape((21, 21))
 
     i = 0
     for chip_lst in chip_array:
@@ -124,7 +123,7 @@ def plot_xy_and_key(df, date):
                         rate_data[x][y] = len(adc)/livetime
                 i += 1
     
-    sns.heatmap(mean_data, vmin = 0, cmap = 'RdPu', 
+    sns.heatmap(mean_data, vmin = 0, cmap = 'RdPu', vmax = 255,
                     linewidths = 0.1, ax=ax[0], linecolor='darkgray', cbar_kws ={'label': 'Mean ADC'})
     sns.heatmap(std_data, vmin = 0,  cmap = 'RdPu',  
                     linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'Std ADC'})
@@ -149,8 +148,8 @@ def plot_adc_trigger(df, date = ''):
 
     """
 
-    fig, ax = plt.subplots(3,3, figsize=(16, 8), sharex=True)
-    fig.set_tight_layout(True)
+    fig, ax = plt.subplots(3,3, figsize=(16, 8), sharex = True, sharey = True)
+    fig.set_tight_layout(True) 
 
     nonrouted_v2a_channels=[6,7,8,9,22,23,24,25,38,39,40,54,55,56,57]
     routed_v2a_channels=[i for i in range(64) if i not in nonrouted_v2a_channels]
@@ -226,7 +225,6 @@ def plot_adc_time(df, date = ''):
 
     # plt.savefig(f'adc_time_{date}.png')
     
-
 def main(filename):
     df, date = parse_file(filename)
     
