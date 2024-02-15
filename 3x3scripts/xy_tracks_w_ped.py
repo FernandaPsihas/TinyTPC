@@ -244,8 +244,8 @@ def main(filename, adc=10):
     
     f = h5py.File(filename,'r')
     
-    date = filename[13:]
-    date = f'{date[5:7]}_{date[8:10]}_{date[11:13]}-{date[14:16]}-{date[17:19]}'
+    regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
+    date = regex.search(filename).group()    
     
     df = pd.DataFrame(f['packets'][:])
     df = df.loc[df['packet_type'] == 0]

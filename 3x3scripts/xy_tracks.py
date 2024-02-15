@@ -7,7 +7,7 @@ import seaborn as sns
 import matplotlib.cm as cm
 from matplotlib.backends.backend_pdf import PdfPages
 import os
-
+import re
 
 V = 4 # in kV  ||| Rough Measurements for tinyTPC
 d = 15 # in cm
@@ -49,7 +49,8 @@ def parse_file(filename):
     df = df.loc[df['packet_type'] == 0]
     df = df.loc[df['valid_parity'] == 1]
     
-    date = filename[17:36]
+    regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
+    date = regex.search(filename).group()   
     return df, date
 
 

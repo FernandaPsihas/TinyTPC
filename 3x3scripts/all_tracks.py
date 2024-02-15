@@ -29,5 +29,5 @@ print(conv_files)
 
 for filename in conv_files:
     date = filename[17:]
-    date = f'{date[5:7]}_{date[8:10]}_{date[11:13]}-{date[14:16]}-{date[17:19]}'
+    date = f'{date[5:7]}_{date[8:10]}_{date[11:13]}_{date[14:16]}_{date[17:19]}'
     xy_tracks.main(filename)
