@@ -1,7 +1,7 @@
 import os
 import xy_tracks
 import convert_rawhdf5_to_hdf5
-
+import data_plots
 #converts all data files in a directory and finds events with >10 hits
 
 files = os.listdir()
@@ -28,6 +28,5 @@ conv_files = sorted(conv_files)
 print(conv_files)
 
 for filename in conv_files:
-    date = filename[17:]
-    date = f'{date[5:7]}_{date[8:10]}_{date[11:13]}_{date[14:16]}_{date[17:19]}'
+    data_plots.main(filename)
     xy_tracks.main(filename)

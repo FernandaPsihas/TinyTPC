@@ -97,16 +97,18 @@ def plot_xy_and_key(df, date):
     mean_data = np.zeros(441).reshape((21, 21))
     std_data = np.zeros(441).reshape((21, 21))
     rate_data = np.zeros(441).reshape((21, 21))
+    off_chips = np.zeros(441).reshape((21, 21))
 
     i = 0
     for chip_lst in chip_array:
         for channel_lst in channel_array:
             for chip_id in chip_lst:
                 chip = df.loc[df['chip_id'] == chip_id]
-                    
                 for channel_id in range(len(channel_lst)):
                     x = int(i/3)
                     y = (i*7)%21 + channel_id
+                    if len(chip) == 0:
+                        off_chips[x][y] = 1
 
                     channel = chip.loc[chip['channel_id']==channel_lst[channel_id]]
                     
@@ -130,6 +132,11 @@ def plot_xy_and_key(df, date):
                     linewidths = 0.1, ax=ax[2], linecolor='darkgray', cbar_kws={'label': 'Rate'})
     sns.heatmap(channel_array, vmin = 0, cmap = 'viridis', 
                     linewidths = 0.1, ax=ax[3], linecolor='darkgray', cbar_kws={'label': 'Channel #'})
+    
+    data_mask = off_chips == 0
+    for i in range(3):
+        sns.heatmap(off_chips, mask = data_mask, vmin = 0, vmax = 3, cmap = 'Greys', cbar = False,
+                        ax=ax[i])
     
     
 def plot_adc_trigger(df, date = ''):
@@ -256,9 +263,8 @@ def main(filename):
     p.close()
     print(output_filename, 'Finished!')
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', '-i', type=str, help='''Input data hdf5 file''')
     args = parser.parse_args()
-    # c = main(**vars(args))
+    c = main(**vars(args))

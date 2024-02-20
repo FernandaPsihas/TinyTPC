@@ -109,6 +109,8 @@ def plot_xy_and_key(df, date):
     mean_data = np.zeros(441).reshape((21, 21))
     std_data = np.zeros(441).reshape((21, 21))
     rate_data = np.zeros(441).reshape((21, 21))
+    off_chips = np.zeros(441).reshape((21, 21))
+
 
     i = 0
     for chip_lst in chip_array:
@@ -128,10 +130,12 @@ def plot_xy_and_key(df, date):
                         mean_data[x][y] = 0
                         std_data[x][y] = 0
                         rate_data[x][y] = 0
+                        off_chips[x][y] = 1
                     else:
                         mean_data[x][y] = np.mean(adc)
                         std_data[x][y] = np.std(adc)
                         rate_data[x][y] = len(adc)/livetime
+                        off_chips[x][y] = 0
                 i += 1
     
     sns.heatmap(mean_data, vmin = 0, cmap = 'RdPu', vmax = 255,
@@ -140,6 +144,12 @@ def plot_xy_and_key(df, date):
                     linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'Std ADC'})
     sns.heatmap(rate_data, vmin = 0, cmap = 'RdPu',
                     linewidths = 0.1, ax=ax[2], linecolor='darkgray', cbar_kws={'label': 'Rate'})
+    
+    data_mask = off_chips == 0
+    for i in range(3):
+        sns.heatmap(off_chips, mask = data_mask, vmin = 0, vmax = 3, cmap = 'Greys', cbar = False,
+                        ax=ax[i])
+    
     sns.heatmap(channel_array, vmin = 0, cmap = 'plasma',
                     linewidths = 0.1, ax=ax[3], linecolor='darkgray', cbar_kws={'label': 'Channel #'})
     
