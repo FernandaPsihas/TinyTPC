@@ -122,7 +122,7 @@ def plot_xy_and_key(df, date):
                         rate_data[x][y] = len(adc)/livetime
                 i += 1
 
-    sns.heatmap(mean_data, vmin = 0, cmap = 'YlGnBu', vmax = 180,
+    sns.heatmap(mean_data, vmin = 0, cmap = 'YlGnBu', vmax = 250,
                     linewidths = 0.1, ax=ax[0], linecolor='darkgray', cbar_kws ={'label': 'Mean ADC'})
     sns.heatmap(std_data, vmin = 0,  cmap = 'YlGnBu', vmax = 50,  
                     linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'Std ADC'})
@@ -201,10 +201,20 @@ def plot_adc_time(df, date = ''):
     fig, ax = plt.subplots(3, 3, figsize=(16, 8), sharex = True, sharey=True)
     fig.set_tight_layout(True)
     # markers = ['.', 'o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X']
+    
+    times = []
+    for chip_id in cids:
+        chip = df.loc[df['chip_id']==chip_id] 
+        if len(chip) == 0:
+            continue
+        else:
+            chip_min_time = list(chip['timestamp'])[0]
+            times.append(chip_min_time)
 
+    min_time = min(times)
+    
     for i in range(len(cids)):
         chip = df.loc[df['chip_id'] == cids[i]]
-        min_time = min(chip['timestamp'])
         for ch in range(len(routed_v2a_channels)):
             channel = chip.loc[chip['channel_id']==routed_v2a_channels[ch]]
             adc = list(channel['dataword'][:])
@@ -217,7 +227,7 @@ def plot_adc_time(df, date = ''):
             
             
         ax[i%3][i//3].set_title(f'chip {cids[i]}')
-        ax[i%3][i//3].set_xlabel('Time')
+        ax[i%3][i//3].set_xlabel('Time [0.1 us]')
         ax[i%3][i//3].set_ylabel('ADC')
         ax[i%3][i//3].set_ylim(0, 260)
         ax[i%3][i//3].grid(alpha = 0.5)
@@ -246,8 +256,9 @@ def main(filename):
     p.close()
     print(output_filename, 'Finished!')
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', '-i', type=str, help='''Input data hdf5 file''')
     args = parser.parse_args()
-    c = main(**vars(args))
+    # c = main(**vars(args))

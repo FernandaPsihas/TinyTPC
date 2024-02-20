@@ -80,8 +80,19 @@ def plot_xy_and_key(df, date):
     ax[3].axis('off')
     fig.set_tight_layout(True)
     
-    chip12 = df.loc[df['chip_id'] == 12]
-    livetime = (max(chip12['timestamp'])-min(chip12['timestamp']))/1e7
+    cids = [12, 22, 32, 13, 23, 33, 14, 24, 34]
+    times = []
+    for chip_id in cids:
+        chip = df.loc[df['chip_id']==chip_id] 
+        if len(chip) == 0:
+            continue
+        else:
+            chip_min_time = list(chip['timestamp'])[0]
+            times.append(chip_min_time)
+
+    min_time = min(times)
+    
+    livetime = (max(df['timestamp'])-min_time)/1e7
     
     channel_array = np.array([[28, 19, 20, 17, 13, 10,  3],
                               [29, 26, 21, 16, 12,  5,  2],
@@ -203,10 +214,20 @@ def plot_adc_time(df, date = ''):
     fig, ax = plt.subplots(3, 3, figsize=(16, 8), sharex = True, sharey=True)
     fig.set_tight_layout(True)
     # markers = ['.', 'o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X']
+    
+    times = []
+    for chip_id in cids:
+        chip = df.loc[df['chip_id']==chip_id] 
+        if len(chip) == 0:
+            continue
+        else:
+            chip_min_time = list(chip['timestamp'])[0]
+            times.append(chip_min_time)
 
+    min_time = min(times)
+    
     for i in range(len(cids)):
         chip = df.loc[df['chip_id'] == cids[i]]
-        min_time = min(chip['timestamp'])
         for ch in range(len(routed_v2a_channels)):
             channel = chip.loc[chip['channel_id']==routed_v2a_channels[ch]]
             adc = list(channel['dataword'][:])
@@ -245,6 +266,7 @@ def main(filename):
     plt.close('all')  
     p.close()
     print(output_filename, 'Finished!')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
