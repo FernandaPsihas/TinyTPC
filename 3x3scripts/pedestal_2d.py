@@ -19,11 +19,6 @@ def main(filename):
     df = df.loc[df['packet_type'] == 0]
     df = df.loc[df['valid_parity'] == 1]
 
-    chip12 = df.loc[df['chip_id'] == 12]
-    min_time = min(chip12['timestamp'])
-
-    livetime = np.max(chip12['timestamp'])-min_time
-
     channel_array = np.array([[28, 19, 20, 17, 13, 10,  3],
                               [29, 26, 21, 16, 12,  5,  2],
                               [30, 27, 18, 15, 11,  4,  1],
