@@ -310,7 +310,6 @@ all_data_0 = all_data_0.set_index([pd.Index([i for i in range(len(all_data_0))])
 all_data_oth = all_data_oth.set_index([pd.Index([i for i in range(len(all_data_oth))])])
 
 # print(all_data)
-#%%
 
 fig, ax = plt.subplots(2, 3, figsize=(12, 8), sharey = True)
 fig.set_tight_layout(True)
@@ -371,39 +370,3 @@ ax[1][2].legend()
 plt.show()   
 
 plt.savefig('dedx_sep.png')
-
-
-# fig, ax = plt.subplots(2, figsize=(6, 8))
-# fig.set_tight_layout(True)
-
-# ax[0].set_ylabel('dADC/dx')
-# ax[0].set_title('dADC/dx vs. dx')
-
-# ax[1].set_ylabel('dADC')
-# ax[1].set_title('dADC vs. dx')
-
-# for i in range(0, 2):
-#     ax[i].set_xlabel('dx')
-#     ax[i].grid(alpha = 0.5)
-#     ax[i].set_xlim(0, 30)
-# # ax.set_ylim(0, 300)
-
-
-# dadcdx = dadcdx_0+dadcdx_oth
-# dadc = dadc_0+dadc_oth
-# dx = dx_0+dx_oth
-
-# ax[0].scatter(dx, dadcdx, s = 6)
-# ax[1].scatter(dx, dadc, s = 6, c = 'C1')
-
-# plt.show()
-# plt.savefig('dadcdx_v_dx.png')
-
-
-
-
-
-
-
-
-
