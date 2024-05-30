@@ -26,6 +26,7 @@ a_5 = 0.2053
 mu = ((a_0 + a_1*E + a_2*E**(3/2) + a_3*E**(5/2))/(1+(a_1/a_0)*E + a_4*E**2 + a_5*E**3))*(T/T_0)**(-3/2) #cm^2/V/s
 v = mu*E*1000 #cm/s
 drift_time = (d/v)*1e7 #0.1 us
+# print(drift_time)
 
 def parse_file(filename):
     """
@@ -84,6 +85,13 @@ def channel_mask():
     return d
 
 
+def read_pedestal():
+    #add pedestal .txt file in manually here:
+    filename = 'pedestal_8-19.txt'
+    x = np.genfromtxt(filename)
+    return x
+
+
 def plot_xy_selected(df, start_time, end_time, date = ''):
     
     fig = plt.figure(figsize=(9, 11))
@@ -99,8 +107,7 @@ def plot_xy_selected(df, start_time, end_time, date = ''):
     
     ax = [ax0, ax1, ax2, ax3, ax4]
 
-    chip12 = df.loc[df['chip_id'] == 12]
-    min_time = min(chip12['timestamp'])
+    min_time = min(df['timestamp'])
     
     channel_array = np.array([[28, 19, 20, 17, 13, 10,  3],
                               [29, 26, 21, 16, 12,  5,  2],
@@ -157,8 +164,8 @@ def plot_xy_selected(df, start_time, end_time, date = ''):
     ax[3].grid(alpha = 0.5)
     ax[3].set_xlabel('ADC')
     ax[3].set_ylabel('# hits')
-    ax[3].hist(df_cut['dataword'], bins = 20, 
-               histtype=u'step', color=cm.plasma(0.3))
+    #ax[3].hist(df_cut['dataword'], bins = 20, 
+    #           histtype=u'step', color=cm.plasma(0.3))
     
     ax[4].grid(alpha = 0.5)
     ax[4].set_xlabel('Time [0.1us]')
@@ -167,7 +174,9 @@ def plot_xy_selected(df, start_time, end_time, date = ''):
                histtype=u'step', color=cm.plasma(0.7))
 
     i = 0
+    ped = read_pedestal()
     dit = channel_mask()
+    adc_lst = []
     for chip_lst in chip_array:
         for channel_lst in channel_array:
             for chip_id in chip_lst:
@@ -199,13 +208,15 @@ def plot_xy_selected(df, start_time, end_time, date = ''):
                         adc_data[x][y] = 0
                         time_data[x][y] = 0
                     else:
-                        ax[2].scatter(time, adc, color=cm.plasma(c/6))
-                        adc_data[x][y] = np.mean(adc)
+                        ax[2].scatter(time, adc - ped[x][y], color=cm.plasma(c/6))
+                        
+                        adc_lst.append(np.mean(adc) - ped[x][y])
 
+                        adc_data[x][y] = np.mean(adc) - ped[x][y]
                         time_data[x][y] = np.mean(time)
                 i += 1
 
-
+    ax[3].hist(adc_lst, bins = 20, histtype=u'step', color=cm.plasma(0.3))
     data_mask = adc_data == 0
 
     min_adc = np.min(adc_data[np.nonzero(adc_data)])
@@ -227,46 +238,47 @@ def main(filename, hits=10):
     bins = 10000
     
     df, date = parse_file(filename)
-    
-    chip12 = df.loc[df['chip_id'] == 12]
-    min_time = min(chip12['timestamp'])
-    
-    time = [t - min_time for t in df['timestamp']]
-    
-    max_time = max(time)
-    bin_size = int(max_time/bins)
-    
-    can = []
-    for i in range(0, bins):
-        t_min = bin_size*i
-        t_max = bin_size*(i+1)
-        cut_df = df[(df['timestamp']-min_time).between(t_min, t_max)]
-        if len(cut_df)>hits:
-            can.append([t_min, t_max])
-    
-    print(len(can), 'potential tracks!')
-    
-    if len(can) == 0: 
-        print('no tracks found!!')
+    if len(df) == 0:
+        return
     else:
+        min_time = min(df['timestamp'])
     
-        fig_nums = []
-        for i in range(len(can)):
-            start_time = can[i][0]/1e7
-            end_time = can[i][1]/1e7
-            plot_xy_selected(df, start_time, end_time, date)
-            fig_nums.append(plt.gcf().number)
-            print(i+1, 'done!')
+        time = [t - min_time for t in df['timestamp']]
+    
+        max_time = max(time)
+        bin_size = int(max_time/bins)
+    
+        can = []
+        for i in range(0, bins):
+            t_min = bin_size*i
+            t_max = bin_size*(i+1)
+            cut_df = df[(df['timestamp']-min_time).between(t_min, t_max)]
+            if len(cut_df)>hits:
+                can.append([t_min, t_max])
+        # print(len(can), 'potential tracks!')
+    
+        if len(can) == 0:
+            return
+        elif len(can) > 20:
+            return
+        else:
+            fig_nums = []
+            for i in range(len(can)):
+                start_time = can[i][0]/1e7
+                end_time = can[i][1]/1e7
+                plot_xy_selected(df, start_time, end_time, date)
+                fig_nums.append(plt.gcf().number)
+            # print(i+1, 'done!')
             
-        p = PdfPages(f'all_tracks_{date}.pdf') 
-        figs = [plt.figure(n) for n in fig_nums] 
+            p = PdfPages(f'all_tracks_{date}.pdf') 
+            figs = [plt.figure(n) for n in fig_nums] 
      
-        for fig in figs:  
-            fig.savefig(p, format='pdf')  
-        plt.close('all')  
-        p.close()
+            for fig in figs:  
+                fig.savefig(p, format='pdf')  
+            plt.close('all')  
+            p.close()
     
-    print('FINISHED!!!')
+    # print(f'{date} FINISHED!!!')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

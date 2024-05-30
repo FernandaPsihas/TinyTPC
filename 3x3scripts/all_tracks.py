@@ -2,6 +2,7 @@ import os
 import xy_tracks
 import convert_rawhdf5_to_hdf5
 import data_plots
+from tqdm import tqdm
 #converts all data files in a directory and finds events with >10 hits
 
 files = os.listdir()
@@ -25,8 +26,9 @@ for filename in files:
 
 print(len(conv_files), 'files to look at!')
 conv_files = sorted(conv_files)
-print(conv_files)
+# print(conv_files)
 
-for filename in conv_files:
+for filename, t in zip(conv_files, tqdm(range(len(conv_files)))):
     data_plots.main(filename)
     xy_tracks.main(filename)
+    pass

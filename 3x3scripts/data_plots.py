@@ -8,6 +8,8 @@ import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
 import argparse
 import re
+import os
+
 
 def parse_file(filename):
     """
@@ -34,6 +36,36 @@ def parse_file(filename):
     regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
     date = regex.search(filename).group()   
     return df, date
+
+
+def parse_json(json_filename):
+    f = open(json_filename)
+
+    off = []
+    for line in f: 
+        if 'channel_mask' in line:
+            for i in line:
+                if i == '1' or i == '0':
+                    off.append(int(i))
+    return off
+
+
+def channel_mask():
+    path = os.path.realpath(__file__) 
+    dir = os.path.dirname(path) 
+    
+    j_dir = dir+'/configs'
+    
+    d = dict()
+    os.chdir(j_dir) 
+    files = os.listdir()
+    for file in files:
+        chip_id = int(file[24:26])
+        channel_mask = parse_json(file)
+        d[chip_id] = channel_mask
+    
+    os.chdir(dir) 
+    return d
 
 
 def plot_xy_and_key(df, date):
@@ -98,12 +130,19 @@ def plot_xy_and_key(df, date):
     std_data = np.zeros(441).reshape((21, 21))
     rate_data = np.zeros(441).reshape((21, 21))
     off_chips = np.zeros(441).reshape((21, 21))
+    masked_data = np.arange(441).reshape((21, 21))
 
+    dit = channel_mask()
     i = 0
     for chip_lst in chip_array:
         for channel_lst in channel_array:
             for chip_id in chip_lst:
                 chip = df.loc[df['chip_id'] == chip_id]
+                if chip_id in dit.keys():
+                    masked = dit[chip_id]
+                else:
+                    masked = None
+
                 for channel_id in range(len(channel_lst)):
                     x = int(i/3)
                     y = (i*7)%21 + channel_id
@@ -113,7 +152,13 @@ def plot_xy_and_key(df, date):
                     channel = chip.loc[chip['channel_id']==channel_lst[channel_id]]
                     
                     adc = list(channel['dataword'])
-                        
+                    
+
+                    if masked != None:
+                        masked_data[x][y] = masked[channel_lst[channel_id]]
+                    else:
+                        masked_data[x][y] = 0
+
                     if len(adc) == 0:
                         mean_data[x][y] = 0
                         std_data[x][y] = 0
@@ -124,15 +169,24 @@ def plot_xy_and_key(df, date):
                         rate_data[x][y] = len(adc)/livetime
                 i += 1
 
+
     sns.heatmap(mean_data, vmin = 0, cmap = 'YlGnBu', vmax = 250,
                     linewidths = 0.1, ax=ax[0], linecolor='darkgray', cbar_kws ={'label': 'Mean ADC'})
     sns.heatmap(std_data, vmin = 0,  cmap = 'YlGnBu', vmax = 50,  
-                    linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'Std ADC'})
+                    linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'RMS ADC'})
     sns.heatmap(rate_data, vmin = 0, cmap = 'YlGnBu', vmax = 0.2,
                     linewidths = 0.1, ax=ax[2], linecolor='darkgray', cbar_kws={'label': 'Rate'})
     sns.heatmap(channel_array, vmin = 0, cmap = 'viridis', 
-                    linewidths = 0.1, ax=ax[3], linecolor='darkgray', cbar_kws={'label': 'Channel #'})
+                    linewidths = 0.1, ax=ax[3], linecolor='darkgray', cbar_kws={'label': 'Channel #'})    
     
+    data_mask = masked_data == 0
+    sns.heatmap(masked_data, mask = data_mask, vmin = 0, vmax = 3, cmap = 'Greys', cbar = False, 
+                    linewidths = 0.1, ax=ax[0], linecolor='darkgray')
+    sns.heatmap(masked_data, mask = data_mask, vmin = 0, vmax = 3, cmap = 'Greys', cbar = False,
+                    linewidths = 0.1, ax=ax[1], linecolor='darkgray')
+    sns.heatmap(masked_data, mask = data_mask, vmin = 0, vmax = 3, cmap = 'Greys', cbar = False, 
+                    linewidths = 0.1, ax=ax[2], linecolor='darkgray')
+
     data_mask = off_chips == 0
     for i in range(3):
         sns.heatmap(off_chips, mask = data_mask, vmin = 0, vmax = 3, cmap = 'Greys', cbar = False,
@@ -160,7 +214,7 @@ def plot_adc_trigger(df, date = ''):
     nonrouted_v2a_channels=[6,7,8,9,22,23,24,25,38,39,40,54,55,56,57]
     routed_v2a_channels=[i for i in range(64) if i not in nonrouted_v2a_channels]
     cids = [12, 22, 32, 13, 23, 33, 14, 24, 34]
-
+    
     for i in range(len(cids)):
         chip = df.loc[df['chip_id'] == cids[i]]
         labels, colors = [], []
@@ -227,10 +281,10 @@ def plot_adc_time(df, date = ''):
             adc = list(channel['dataword'][:])
             time = [i - min_time for i in list(channel['timestamp'][:])]
             weight = routed_v2a_channels[ch]/64
-            ax[i%3][i//3].scatter(time, adc, s = 0.8, color=cm.viridis(weight), 
+            ax[i%3][i//3].scatter(time, adc, s = 2, color=cm.viridis(weight), 
                                alpha = 0.9)
-            ax[i%3][i//3].plot(time, adc, lw = 0.5, color=cm.viridis(weight), 
-                               alpha = 0.9)
+            #ax[i%3][i//3].plot(time, adc, lw = 0.5, color=cm.viridis(weight), 
+             #                  alpha = 0.9)
             
             
         ax[i%3][i//3].set_title(f'chip {cids[i]}')
@@ -244,24 +298,26 @@ def plot_adc_time(df, date = ''):
 
 def main(filename):
     df, date = parse_file(filename)
+    if len(df) == 0:
+        return
+    else: 
+        fig_nums = []
+        plot_xy_and_key(df, date)
+        fig_nums.append(plt.gcf().number)
+        plot_adc_trigger(df)
+        fig_nums.append(plt.gcf().number)
+        plot_adc_time(df)
+        fig_nums.append(plt.gcf().number)
     
-    fig_nums = []
-    plot_xy_and_key(df, date)
-    fig_nums.append(plt.gcf().number)
-    plot_adc_trigger(df)
-    fig_nums.append(plt.gcf().number)
-    plot_adc_time(df)
-    fig_nums.append(plt.gcf().number)
-    
-    output_filename = f'data_{date}.pdf'
-    p = PdfPages(output_filename) 
-    figs = [plt.figure(n) for n in fig_nums] 
+        output_filename = f'data_{date}.pdf'
+        p = PdfPages(output_filename) 
+        figs = [plt.figure(n) for n in fig_nums] 
  
-    for fig in figs:  
-        fig.savefig(p, format='pdf')  
-    plt.close('all')  
-    p.close()
-    print(output_filename, 'Finished!')
+        for fig in figs:  
+            fig.savefig(p, format='pdf')  
+        plt.close('all')  
+        p.close()
+    #print(output_filename, 'Finished!')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
