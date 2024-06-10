@@ -87,7 +87,7 @@ def channel_mask():
 
 def read_pedestal():
     #add pedestal .txt file in manually here:
-    filename = 'pedestal_8-19.txt'
+    filename = 'pedestal_02_23_13_20_04.txt'
     x = np.genfromtxt(filename)
     return x
 
@@ -234,7 +234,7 @@ def plot_xy_selected(df, start_time, end_time, date = ''):
     # plt.savefig(f'selected_xy_{date}.png')
         
 
-def main(filename, hits=10):
+def main(filename, hits=6):
     bins = 10000
     
     df, date = parse_file(filename)
