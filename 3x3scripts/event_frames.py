@@ -55,17 +55,21 @@ def all_frame(filename, hits = 6):
         d = event_frame(df, can[i][0], can[i][1], i)
         lst.append(d)
 
-    df_out = pd.concat(lst, ignore_index = True)
-    return df_out
+    if len(lst) != 0:
+        df_out = pd.concat(lst, ignore_index = True)
+        return df_out
+    else:
+        return 0
 
 
 def main(filename):
     df_out = all_frame(filename)
-    regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
-    date = regex.search(filename).group()
-    date = f'{date[5:7]}_{date[8:10]}_{date[11:13]}-{date[14:16]}-{date[17:19]}'
-    output_filename = f'events_{date}.h5'
-    df_out.to_hdf(output_filename, key='df', mode='w')  
+    if type(df_out) != int:
+        regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
+        date = regex.search(filename).group()
+        date = f'{date[5:7]}_{date[8:10]}_{date[11:13]}-{date[14:16]}-{date[17:19]}'
+        output_filename = f'events_{date}.h5'
+        df_out.to_hdf(output_filename, key='df', mode='w')  
 
 
 files = os.listdir()

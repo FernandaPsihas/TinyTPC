@@ -4,7 +4,7 @@ creates pink plots
 all_tracks.py `python3 all_tracks.py`
 will convert all raw data files, create blue data plots, and find >10 hit events for every raw data file in a directory. Does not subtract pedestal values. you can comment out everything after line 30 to convert files in bulk
 
-convert_rawhdf5_to_hdf5.py `python3 convert_rawhdf5_to_hdf5.py –-input_filename "input_filename"`--output_filename "output_filename" --block_size "10240"
+convert_rawhdf5_to_hdf5.py `python3 convert_rawhdf5_to_hdf5.py –-input_filename "input_filename" --output_filename "output_filename" --block_size "10240"`
 converts one raw file
 
 data_plots.py `python3 data_plots.py -–filename "filename"`
