@@ -11,10 +11,8 @@ data_plots.py `python3 data_plots.py -–filename "filename"`
 makes blue-green plots. needs converted file
 
 xy_tracks.py `python3 xy_tracks.py -–filename "filename"`
-finds >10 hit events for one file. does not subtract pedestal values
+finds >10 hit events for one file. if fewer chips are used, max number of hits needs to be changed manually. subtracts pedestal values, needs pedestal .txt file created by pedestal_2d.py, which can be put in manually on line 90
 
 pedestal_2d.py `python3 pedestal_2d.py -–filename "filename"`
 turns pedestal into 2d matrix
 
-xy_tracks_w_ped.py `python3 xy_tracks_w_ped.py -–filename "filename"`
-finds >10 hit events for one file. needs output .txt file from pedestal_2d.py, which can be manually added on line 90
