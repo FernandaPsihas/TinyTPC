@@ -3,17 +3,20 @@ import xy_tracks
 import convert_rawhdf5_to_hdf5
 import data_plots
 from tqdm import tqdm
+import re
 #converts all data files in a directory and finds events with >10 hits
 
 files = os.listdir()
 
 conv_files = []
 for filename in files:
-    if 'tile-id-tile' in filename:
+    if 'tile-id-' in filename:
         if 'pedestal' in filename:
             continue
         elif '-raw' in filename:
-            output_filename = filename[:12]+'-'+filename[17:]
+            regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
+            date = regex.search(filename).group() 
+            output_filename = f'tile-id-3x3_{date}.h5'
             if output_filename in files:
                 conv_files.append(output_filename)
                 #print(output_filename, 'already exists!')
