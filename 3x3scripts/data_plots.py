@@ -53,14 +53,16 @@ def parse_json(json_filename):
 def channel_mask():
     path = os.path.realpath(__file__) 
     dir = os.path.dirname(path) 
-    
-    j_dir = dir+'/configs'
+    j_dir = dir + '/configs'
     
     d = dict()
     os.chdir(j_dir) 
     files = os.listdir()
     for file in files:
-        chip_id = int(file[24:26])
+        regex = re.compile(r'\d{1}-\d{1}-\d{2}')
+        stri = regex.search(file).group()
+
+        chip_id = stri[4:]
         channel_mask = parse_json(file)
         d[chip_id] = channel_mask
     

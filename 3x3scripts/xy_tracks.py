@@ -67,9 +67,10 @@ def parse_json(json_filename):
     return off
 
 
-def channel_mask(direct):
-    
-    j_dir = direct+'/configs'
+def channel_mask():
+    path = os.path.realpath(__file__) 
+    dir = os.path.dirname(path) 
+    j_dir = dir + '/configs'
     
     d = dict()
     os.chdir(j_dir) 
@@ -82,7 +83,7 @@ def channel_mask(direct):
         channel_mask = parse_json(file)
         d[chip_id] = channel_mask
     
-    os.chdir(direct) 
+    os.chdir(dir) 
     return d
 
 
@@ -91,7 +92,7 @@ def read_pedestal(pedestal):
     return x
 
 
-def plot_xy_selected(df, start_time, end_time, pedestal, direct, date = ''):
+def plot_xy_selected(df, start_time, end_time, pedestal, date = ''):
     
     fig = plt.figure(figsize=(9, 11))
     spec = fig.add_gridspec(3, 2)
@@ -174,7 +175,7 @@ def plot_xy_selected(df, start_time, end_time, pedestal, direct, date = ''):
 
     i = 0
     ped = read_pedestal(pedestal)
-    dit = channel_mask(direct)
+    dit = channel_mask()
     adc_lst = []
     for chip_lst in chip_array:
         for channel_lst in channel_array:
@@ -233,7 +234,7 @@ def plot_xy_selected(df, start_time, end_time, pedestal, direct, date = ''):
     # plt.savefig(f'selected_xy_{date}.png')
         
 
-def main(filename, pedestal, direct, hits=6):
+def main(filename, pedestal, hits=6):
     bins = 10000
     
     df, date = parse_file(filename)
@@ -265,7 +266,7 @@ def main(filename, pedestal, direct, hits=6):
             for i in range(len(can)):
                 start_time = can[i][0]/1e7
                 end_time = can[i][1]/1e7
-                plot_xy_selected(df, start_time, end_time, pedestal, direct, date)
+                plot_xy_selected(df, start_time, end_time, pedestal, date)
                 fig_nums.append(plt.gcf().number)
             # print(i+1, 'done!')
             
@@ -283,7 +284,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', type=str, help='''Input hdf5 file''')
     parser.add_argument('--pedestal', type=str, help='''Pedestal produced by pedestal_2d.py''')
-    parser.add_argument('--directory', type=str, help='''Directory with files''')
     parser.add_argument('--hits', default=10, type=int, help='''ADC cutoff for potential tracks (default = 10)''')
     args = parser.parse_args()
     main(**vars(args))
