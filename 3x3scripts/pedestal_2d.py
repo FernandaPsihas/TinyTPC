@@ -4,6 +4,7 @@ import h5py
 import numpy as np
 import argparse
 import os
+import re
 
 #creates a 2d matrix of pedestal values to be subtracted from raw ADC data - needed for xy_tracks_w_ped.py 
 
@@ -27,9 +28,9 @@ def main(filename):
                               [34, 37, 44, 47, 51, 58, 61],
                               [35, 41, 45, 48, 53, 52, 60]])
     
-    chip_array = np.array([[12, 13, 14],
-                           [22, 23, 24],
-                           [32, 33, 34]])
+    chip_array = np.array([[14, 13, 12],
+                           [24, 23, 22],
+                           [34, 33, 32]])
 
     adc_data = np.arange(441).reshape((21, 21))
 
@@ -51,7 +52,9 @@ def main(filename):
                     else:
                         adc_data[x][y] = np.mean(adc)
                 i += 1
-    date = filename[27:41]
+    
+    regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
+    date = regex.search(filename).group()
     np.savetxt(f'pedestal_{date}.txt', adc_data)
 
         

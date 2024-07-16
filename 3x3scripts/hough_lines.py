@@ -52,9 +52,9 @@ def array_2d(df):
                               [34, 37, 44, 47, 51, 58, 61],
                               [35, 41, 45, 48, 53, 52, 60]])
 
-    chip_array = np.array([[12, 13, 14],
-                           [22, 23, 24],
-                           [32, 33, 34]])
+    chip_array = np.array([[14, 13, 12],
+                           [24, 23, 22],
+                           [34, 33, 32]])
 
     adc_data = np.arange(441).reshape((21, 21))
     time_data = np.arange(441).reshape((21, 21))

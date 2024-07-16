@@ -67,32 +67,31 @@ def parse_json(json_filename):
     return off
 
 
-def channel_mask():
-    path = os.path.realpath(__file__) 
-    dir = os.path.dirname(path) 
+def channel_mask(direct):
     
-    j_dir = dir+'/configs'
+    j_dir = direct+'/configs'
     
     d = dict()
     os.chdir(j_dir) 
     files = os.listdir()
     for file in files:
-        chip_id = int(file[24:26])
+        regex = re.compile(r'\d{1}-\d{1}-\d{2}')
+        stri = regex.search(file).group()
+
+        chip_id = stri[4:]
         channel_mask = parse_json(file)
         d[chip_id] = channel_mask
     
-    os.chdir(dir) 
+    os.chdir(direct) 
     return d
 
 
-def read_pedestal():
-    #add pedestal .txt file in manually here:
-    filename = 'pedestal_02_23_13_20_04.txt'
-    x = np.genfromtxt(filename)
+def read_pedestal(pedestal):
+    x = np.genfromtxt(pedestal)
     return x
 
 
-def plot_xy_selected(df, start_time, end_time, date = ''):
+def plot_xy_selected(df, start_time, end_time, pedestal, direct, date = ''):
     
     fig = plt.figure(figsize=(9, 11))
     spec = fig.add_gridspec(3, 2)
@@ -117,9 +116,9 @@ def plot_xy_selected(df, start_time, end_time, date = ''):
                               [34, 37, 44, 47, 51, 58, 61],
                               [35, 41, 45, 48, 53, 52, 60]])
 
-    chip_array = np.array([[12, 13, 14],
-                           [22, 23, 24],
-                           [32, 33, 34]])
+    chip_array = np.array([[14, 13, 12],
+                           [24, 23, 22],
+                           [34, 33, 32]])
 
     adc_data = np.arange(441).reshape((21, 21))
     time_data = np.arange(441).reshape((21, 21))
@@ -174,8 +173,8 @@ def plot_xy_selected(df, start_time, end_time, date = ''):
                histtype=u'step', color=cm.plasma(0.7))
 
     i = 0
-    ped = read_pedestal()
-    dit = channel_mask()
+    ped = read_pedestal(pedestal)
+    dit = channel_mask(direct)
     adc_lst = []
     for chip_lst in chip_array:
         for channel_lst in channel_array:
@@ -184,8 +183,8 @@ def plot_xy_selected(df, start_time, end_time, date = ''):
                 a, b = np.where(chip_array == chip_id)
                 c = 2*a[0]+b[0]
                 
-                if chip_id in dit.keys():
-                    masked = dit[chip_id]
+                if str(chip_id) in dit.keys():
+                    masked = dit[str(chip_id)]
                 else:
                     masked = None
                     
@@ -234,7 +233,7 @@ def plot_xy_selected(df, start_time, end_time, date = ''):
     # plt.savefig(f'selected_xy_{date}.png')
         
 
-def main(filename, hits=6):
+def main(filename, pedestal, direct, hits=6):
     bins = 10000
     
     df, date = parse_file(filename)
@@ -266,7 +265,7 @@ def main(filename, hits=6):
             for i in range(len(can)):
                 start_time = can[i][0]/1e7
                 end_time = can[i][1]/1e7
-                plot_xy_selected(df, start_time, end_time, date)
+                plot_xy_selected(df, start_time, end_time, pedestal, direct, date)
                 fig_nums.append(plt.gcf().number)
             # print(i+1, 'done!')
             
@@ -283,6 +282,9 @@ def main(filename, hits=6):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', type=str, help='''Input hdf5 file''')
+    parser.add_argument('--pedestal', type=str, help='''Pedestal produced by pedestal_2d.py''')
+    parser.add_argument('--directory', type=str, help='''Directory with files''')
     parser.add_argument('--hits', default=10, type=int, help='''ADC cutoff for potential tracks (default = 10)''')
     args = parser.parse_args()
     main(**vars(args))
+

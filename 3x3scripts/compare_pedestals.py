@@ -82,9 +82,9 @@ def compare_pedestals(df1, df2, date1 = '', date2 = ''):
                               [34, 37, 44, 47, 51, 58, 61],
                               [35, 41, 45, 48, 53, 52, 60]])
 
-    chip_array = np.array([[12, 13, 14],
-                           [22, 23, 24],
-                           [32, 33, 34]])
+    chip_array = np.array([[14, 13, 12],
+                           [24, 23, 22],
+                           [34, 33, 32]])
 
     mean_data = np.zeros(441).reshape((21, 21))
     std_data = np.zeros(441).reshape((21, 21))
@@ -120,8 +120,10 @@ def compare_pedestals(df1, df2, date1 = '', date2 = ''):
                         else:
                             mean_data[x][y] = np.mean(adc1)/np.mean(adc2)
                         
-                        if np.std(adc2) == 0:
+                        if len(adc2) == 0:
                             std_data[x][y] = 0
+                        elif livetime2 == 0:
+                            rate_data[x][y] = 0
                         else:
                             std_data[x][y] = np.std(adc1)/np.std(adc2)
                         rate_data[x][y] = (len(adc1)/livetime1)/(len(adc2)/livetime2)
