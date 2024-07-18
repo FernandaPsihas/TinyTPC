@@ -28,6 +28,53 @@ v = mu*E*1000 #cm/s
 drift_time = (d/v)*1e7 #0.1 us
 # print(drift_time)
 
+def parse_pedestal(filename):
+    f = h5py.File(filename,'r')
+    
+    
+    df = pd.DataFrame(f['packets'][:])
+    df = df.loc[df['packet_type'] == 0]
+    df = df.loc[df['valid_parity'] == 1]
+
+    channel_array = np.array([[28, 19, 20, 17, 13, 10,  3],
+                              [29, 26, 21, 16, 12,  5,  2],
+                              [30, 27, 18, 15, 11,  4,  1],
+                              [31, 32, 42, 14, 49,  0, 63],
+                              [33, 36, 43, 46, 50, 59, 62],
+                              [34, 37, 44, 47, 51, 58, 61],
+                              [35, 41, 45, 48, 53, 52, 60]])
+    
+    chip_array = np.array([[14, 13, 12],
+                           [24, 23, 22],
+                           [34, 33, 32]])
+
+    adc_data = np.arange(441).reshape((21, 21))
+
+    i = 0
+    for chip_lst in chip_array:    
+        for channel_lst in channel_array:
+            for chip_id in chip_lst:
+                chip = df.loc[df['chip_id'] == chip_id]
+                for channel_id in range(len(channel_lst)):
+                    x = int(i/3)
+                    y = (i*7)%21 + channel_id
+
+                    channel = chip.loc[chip['channel_id']==channel_lst[channel_id]]
+                    
+                    adc = list(channel['dataword'])
+
+                    if len(adc) == 0:
+                        adc_data[x][y] = 0
+                    else:
+                        adc_data[x][y] = np.mean(adc)
+                i += 1
+    
+    # regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
+    # date = regex.search(filename).group()
+    # np.savetxt(f'pedestal_{date}.txt', adc_data)
+    return(adc_data)
+
+
 def parse_file(filename):
     """
     Reads the .h5 file from the pedestal run and turns it into a readable dataframe
@@ -85,11 +132,6 @@ def channel_mask():
     
     os.chdir(dir) 
     return d
-
-
-def read_pedestal(pedestal):
-    x = np.genfromtxt(pedestal)
-    return x
 
 
 def plot_xy_selected(df, start_time, end_time, pedestal, date = ''):
@@ -174,7 +216,6 @@ def plot_xy_selected(df, start_time, end_time, pedestal, date = ''):
                histtype=u'step', color=cm.plasma(0.7))
 
     i = 0
-    ped = read_pedestal(pedestal)
     dit = channel_mask()
     adc_lst = []
     for chip_lst in chip_array:
@@ -195,7 +236,7 @@ def plot_xy_selected(df, start_time, end_time, pedestal, date = ''):
 
                     channel = chip.loc[chip['channel_id']==channel_lst[channel_id]]
                     
-                    adc = list(channel['dataword'])
+                    adc = [a - pedestal[x][y] for a in channel['dataword']]
                     time = list(channel['timestamp'])
                     time = [t - min_time for t in time]
                     
@@ -208,11 +249,11 @@ def plot_xy_selected(df, start_time, end_time, pedestal, date = ''):
                         adc_data[x][y] = 0
                         time_data[x][y] = 0
                     else:
-                        ax[2].scatter(time, adc - ped[x][y], color=cm.plasma(c/6))
+                        ax[2].scatter(time, adc, color=cm.plasma(c/6))
                         
-                        adc_lst.append(np.mean(adc) - ped[x][y])
+                        adc_lst.append(np.mean(adc))
 
-                        adc_data[x][y] = np.mean(adc) - ped[x][y]
+                        adc_data[x][y] = np.mean(adc)
                         time_data[x][y] = np.mean(time)
                 i += 1
 
@@ -238,6 +279,7 @@ def main(filename, pedestal, hits=6):
     bins = 10000
     
     df, date = parse_file(filename)
+    ped = parse_pedestal(pedestal)
     if len(df) == 0:
         return
     else:
@@ -266,7 +308,7 @@ def main(filename, pedestal, hits=6):
             for i in range(len(can)):
                 start_time = can[i][0]/1e7
                 end_time = can[i][1]/1e7
-                plot_xy_selected(df, start_time, end_time, pedestal, date)
+                plot_xy_selected(df, start_time, end_time, ped, date)
                 fig_nums.append(plt.gcf().number)
             # print(i+1, 'done!')
             
@@ -283,7 +325,7 @@ def main(filename, pedestal, hits=6):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', type=str, help='''Input hdf5 file''')
-    parser.add_argument('--pedestal', type=str, help='''Pedestal produced by pedestal_2d.py''')
+    parser.add_argument('--pedestal', type=str, help='''Pedesta hdf5 file''')
     parser.add_argument('--hits', default=10, type=int, help='''ADC cutoff for potential tracks (default = 10)''')
     args = parser.parse_args()
     main(**vars(args))

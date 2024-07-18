@@ -10,6 +10,52 @@ import argparse
 import re
 import os
 
+def parse_pedestal(filename):
+    f = h5py.File(filename,'r')
+    
+    
+    df = pd.DataFrame(f['packets'][:])
+    df = df.loc[df['packet_type'] == 0]
+    df = df.loc[df['valid_parity'] == 1]
+
+    channel_array = np.array([[28, 19, 20, 17, 13, 10,  3],
+                              [29, 26, 21, 16, 12,  5,  2],
+                              [30, 27, 18, 15, 11,  4,  1],
+                              [31, 32, 42, 14, 49,  0, 63],
+                              [33, 36, 43, 46, 50, 59, 62],
+                              [34, 37, 44, 47, 51, 58, 61],
+                              [35, 41, 45, 48, 53, 52, 60]])
+    
+    chip_array = np.array([[14, 13, 12],
+                           [24, 23, 22],
+                           [34, 33, 32]])
+
+    adc_data = np.arange(441).reshape((21, 21))
+
+    i = 0
+    for chip_lst in chip_array:    
+        for channel_lst in channel_array:
+            for chip_id in chip_lst:
+                chip = df.loc[df['chip_id'] == chip_id]
+                for channel_id in range(len(channel_lst)):
+                    x = int(i/3)
+                    y = (i*7)%21 + channel_id
+
+                    channel = chip.loc[chip['channel_id']==channel_lst[channel_id]]
+                    
+                    adc = list(channel['dataword'])
+
+                    if len(adc) == 0:
+                        adc_data[x][y] = 0
+                    else:
+                        adc_data[x][y] = np.mean(adc)
+                i += 1
+    
+    # regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
+    # date = regex.search(filename).group()
+    # np.savetxt(f'pedestal_{date}.txt', adc_data)
+    return(adc_data)
+
 
 def parse_file(filename):
     """
@@ -69,8 +115,11 @@ def parse_file(filename):
 #     os.chdir(dir) 
 #     return d
 
+# def read_pedestal(pedestal):
+#     x = np.genfromtxt(pedestal)
+#     return x
 
-def plot_xy_and_key(df, date):
+def plot_xy_and_key(df, pedestal, date):
     """
     Creates a 2d histogram plot the mean ADC, std ADC, and rate for each channel and a key showing the channel colors for the trigger/time plots.
 
@@ -95,17 +144,17 @@ def plot_xy_and_key(df, date):
         ax[i].hlines([0, 7, 14, 21], 0, 21, color = 'black', lw = 1)
         ax[i].vlines([0, 7, 14, 21], 0, 21, color = 'black', lw = 1)
         
-        ax[i].annotate('12', xy = [3.5, 3.5], ha='center', va='center')
+        ax[i].annotate('14', xy = [3.5, 3.5], ha='center', va='center')
         ax[i].annotate('13', xy = [10.5, 3.5], ha='center', va='center')
-        ax[i].annotate('14', xy = [17.5, 3.5], ha='center', va='center')
+        ax[i].annotate('12', xy = [17.5, 3.5], ha='center', va='center')
         
-        ax[i].annotate('22', xy = [3.5, 10.5], ha='center', va='center')
+        ax[i].annotate('24', xy = [3.5, 10.5], ha='center', va='center')
         ax[i].annotate('23', xy = [10.5, 10.5], ha='center', va='center')
-        ax[i].annotate('24', xy = [17.5, 10.5], ha='center', va='center')
+        ax[i].annotate('22', xy = [17.5, 10.5], ha='center', va='center')
         
-        ax[i].annotate('32', xy = [3.5, 17.5], ha='center', va='center')
+        ax[i].annotate('34', xy = [3.5, 17.5], ha='center', va='center')
         ax[i].annotate('33', xy = [10.5, 17.5], ha='center', va='center')
-        ax[i].annotate('34', xy = [17.5, 17.5], ha='center', va='center')
+        ax[i].annotate('32', xy = [17.5, 17.5], ha='center', va='center')
     
     ax[0].set_title('Mean ADC')
     ax[1].set_title('STD ADC')
@@ -136,6 +185,7 @@ def plot_xy_and_key(df, date):
 
     # dit = channel_mask()
     i = 0
+    # ped = read_pedestal(pedestal)
     for chip_lst in chip_array:
         for channel_lst in channel_array:
             for chip_id in chip_lst:
@@ -153,9 +203,8 @@ def plot_xy_and_key(df, date):
 
                     channel = chip.loc[chip['channel_id']==channel_lst[channel_id]]
                     
-                    adc = list(channel['dataword'])
+                    adc = [a - pedestal[x][y] for a in channel['dataword']]
                     
-
                     # if masked != None:
                     #     masked_data[x][y] = masked[channel_lst[channel_id]]
                     # else:
@@ -172,11 +221,11 @@ def plot_xy_and_key(df, date):
                 i += 1
 
 
-    sns.heatmap(mean_data, vmin = 0, cmap = 'YlGnBu', vmax = 250,
+    sns.heatmap(mean_data, vmin = 0, cmap = 'YlGnBu', vmax = 100,
                     linewidths = 0.1, ax=ax[0], linecolor='darkgray', cbar_kws ={'label': 'Mean ADC'})
-    sns.heatmap(std_data, vmin = 0,  cmap = 'YlGnBu', vmax = 50,  
+    sns.heatmap(std_data, vmin = 0,  cmap = 'YlGnBu', vmax = 25,  
                     linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'RMS ADC'})
-    sns.heatmap(rate_data, vmin = 0, cmap = 'YlGnBu', vmax = 0.2,
+    sns.heatmap(rate_data, vmin = 0, cmap = 'YlGnBu', vmax = 0.5,
                     linewidths = 0.1, ax=ax[2], linecolor='darkgray', cbar_kws={'label': 'Rate'})
     sns.heatmap(channel_array, vmin = 0, cmap = 'viridis', 
                     linewidths = 0.1, ax=ax[3], linecolor='darkgray', cbar_kws={'label': 'Channel #'})    
@@ -195,7 +244,7 @@ def plot_xy_and_key(df, date):
                         ax=ax[i])
     
     
-def plot_adc_trigger(df, date = ''):
+def plot_adc_trigger(df, pedestal, date = ''):
     """
     Creates a 3x3 histogram plot of the ADC of every channel from each chip.
 
@@ -213,36 +262,51 @@ def plot_adc_trigger(df, date = ''):
     fig, ax = plt.subplots(3,3, figsize=(16, 8), sharex = True, sharey = True)
     fig.set_tight_layout(True)
 
-    nonrouted_v2a_channels=[6,7,8,9,22,23,24,25,38,39,40,54,55,56,57]
-    routed_v2a_channels=[i for i in range(64) if i not in nonrouted_v2a_channels]
-    cids = [12, 22, 32, 13, 23, 33, 14, 24, 34]
+    i = 0
+    channel_array = np.array([[28, 19, 20, 17, 13, 10,  3],
+                              [29, 26, 21, 16, 12,  5,  2],
+                              [30, 27, 18, 15, 11,  4,  1],
+                              [31, 32, 42, 14, 49,  0, 63],
+                              [33, 36, 43, 46, 50, 59, 62],
+                              [34, 37, 44, 47, 51, 58, 61],
+                              [35, 41, 45, 48, 53, 52, 60]])
+
+    chip_array = np.array([[14, 13, 12],
+                           [24, 23, 22],
+                           [34, 33, 32]])
     
-    for i in range(len(cids)):
-        chip = df.loc[df['chip_id'] == cids[i]]
-        labels, colors = [], []
-        for chan_id in routed_v2a_channels:
-            channel = chip.loc[chip['channel_id']==chan_id]
-            channel = list(channel['dataword'])
-            weight = chan_id/64
+    # ped = read_pedestal(pedestal)
+    for chip_lst in chip_array:
+        for channel_lst in channel_array:
+            for chip_id in chip_lst:
+                k, l = np.where(chip_array == chip_id)
+                k = int(k[0])
+                l = int(l[0])
             
-            ax[i%3][i//3].hist(channel, bins = np.linspace(0, 260, 261), log=True, histtype=u'step',
+                ax[k][l].grid(alpha = 0.5)
+                ax[k][l].set_xlabel('ADC')
+                ax[k][l].set_ylabel('trigger count')
+                ax[k][l].set_title(f'chip {chip_id}')
+
+                chip = df.loc[df['chip_id'] == chip_id]
+                for channel_id in range(len(channel_lst)):
+                    x = int(i/3)
+                    y = (i*7)%21 + channel_id
+
+                    pedestal_val = pedestal[x][y]
+                    channel = chip.loc[chip['channel_id']==channel_lst[channel_id]]
+
+                    adc = [dw - pedestal_val for dw in channel['dataword']]
+
+                    weight = (channel_lst[channel_id])/64
+
+                    ax[k][l].hist(adc, bins = np.linspace(0, 100, 101), log=True, histtype=u'step',
                                alpha = 0.8, color=cm.viridis(weight), lw = 0.5)
-            ax[i%3][i//3].grid(alpha = 0.5)
-            
-            if channel.count(255) > 0.5*len(channel):
-                labels.append(chan_id)
-                colors.append(cm.plasma(weight))
-        
-        # lines = [Line2D([0], [0], color=colors[i]) for i in range(len(colors))]
-        
-        ax[i%3][i//3].set_title(f'chip {cids[i]}')
-        ax[i%3][i//3].set_xlabel('ADC')
-        ax[i%3][i//3].set_ylabel('trigger count')
-        # ax[i%3][i//3].legend(lines, labels, loc='upper left')
-        # plt.savefig(f'adc_trigger_{date}.png')
+                i += 1
+    # plt.savefig(f'adc_trigger_{date}.png')
         
         
-def plot_adc_time(df, date = ''):
+def plot_adc_time(df, pedestal, date = ''):
     """
     Creates a plot of the ADC vs. the time for every channel on each chip
 
@@ -275,40 +339,62 @@ def plot_adc_time(df, date = ''):
             times.append(chip_min_time)
 
     min_time = min(times)
-    
-    for i in range(len(cids)):
-        chip = df.loc[df['chip_id'] == cids[i]]
-        for ch in range(len(routed_v2a_channels)):
-            channel = chip.loc[chip['channel_id']==routed_v2a_channels[ch]]
-            adc = list(channel['dataword'][:])
-            time = [i - min_time for i in list(channel['timestamp'][:])]
-            weight = routed_v2a_channels[ch]/64
-            ax[i%3][i//3].scatter(time, adc, s = 2, color=cm.viridis(weight), 
-                               alpha = 0.9)
-            #ax[i%3][i//3].plot(time, adc, lw = 0.5, color=cm.viridis(weight), 
-             #                  alpha = 0.9)
-            
-            
-        ax[i%3][i//3].set_title(f'chip {cids[i]}')
-        ax[i%3][i//3].set_xlabel('Time [0.1 us]')
-        ax[i%3][i//3].set_ylabel('ADC')
-        ax[i%3][i//3].set_ylim(0, 260)
-        ax[i%3][i//3].grid(alpha = 0.5)
+    i = 0
+    channel_array = np.array([[28, 19, 20, 17, 13, 10,  3],
+                              [29, 26, 21, 16, 12,  5,  2],
+                              [30, 27, 18, 15, 11,  4,  1],
+                              [31, 32, 42, 14, 49,  0, 63],
+                              [33, 36, 43, 46, 50, 59, 62],
+                              [34, 37, 44, 47, 51, 58, 61],
+                              [35, 41, 45, 48, 53, 52, 60]])
 
+    chip_array = np.array([[14, 13, 12],
+                           [24, 23, 22],
+                           [34, 33, 32]])
+    
+    # ped = read_pedestal(pedestal)
+    for chip_lst in chip_array:
+        for channel_lst in channel_array:
+            for chip_id in chip_lst:
+                k, l = np.where(chip_array == chip_id)
+                k = int(k[0])
+                l = int(l[0])
+            
+                ax[k][l].grid(alpha = 0.5)
+                ax[k][l].set_xlabel('ADC')
+                ax[k][l].set_ylabel('trigger count')
+                ax[k][l].set_title(f'chip {chip_id}')
+
+                chip = df.loc[df['chip_id'] == chip_id]
+                for channel_id in range(len(channel_lst)):
+                    x = int(i/3)
+                    y = (i*7)%21 + channel_id
+
+                    pedestal_val = pedestal[x][y]
+                    channel = chip.loc[chip['channel_id']==channel_lst[channel_id]]
+
+                    time = [t - min_time for t in channel['timestamp']]
+                    adc = [dw - pedestal_val for dw in channel['dataword']]
+
+                    weight = (channel_lst[channel_id])/64
+                    ax[k][l].scatter(time, adc, s = 2, color=cm.viridis(weight), 
+                               alpha = 0.9)
+                i += 1
     # plt.savefig(f'adc_time_{date}.png')
     
 
-def main(filename, output_dir = str(os.path.dirname(os.path.realpath(__file__)))):
+def main(filename, pedestal, output_dir = str(os.path.dirname(os.path.realpath(__file__)))):
+    ped = parse_pedestal(pedestal)
     df, date = parse_file(filename)
     if len(df) == 0:
         return
     else: 
         fig_nums = []
-        plot_xy_and_key(df, date)
+        plot_xy_and_key(df, ped, date)
         fig_nums.append(plt.gcf().number)
-        plot_adc_trigger(df)
+        plot_adc_trigger(df, ped)
         fig_nums.append(plt.gcf().number)
-        plot_adc_time(df)
+        plot_adc_time(df, ped)
         fig_nums.append(plt.gcf().number)
     
         output_filename = output_dir + f'/data_{date}.pdf'
@@ -325,6 +411,7 @@ def main(filename, output_dir = str(os.path.dirname(os.path.realpath(__file__)))
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', '-i', type=str, help='''Input data hdf5 file''')
+    parser.add_argument('--pedestal', '-p', type=str, help='''Pedestal hdf5 file''')
     parser.add_argument('--output_dir', '-o', default= str(os.path.dirname(os.path.realpath(__file__))), type=str, help='''Output data hdf5 file''')
     args = parser.parse_args()
     c = main(**vars(args))
