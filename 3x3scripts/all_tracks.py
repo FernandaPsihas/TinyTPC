@@ -6,6 +6,8 @@ from tqdm import tqdm
 import re
 #converts all data files in a directory and finds events with >10 hits
 
+pedestal = 'put the pedestal here'
+
 files = os.listdir()
 
 conv_files = []
@@ -20,8 +22,8 @@ for filename in files:
             if output_filename in files:
                 conv_files.append(output_filename)
                 #print(output_filename, 'already exists!')
-            elif 'conv' in filename:
-                conv_files.append(filename)
+            # elif 'conv' in filename:
+            #     conv_files.append(filename)
             else:
                 convert_rawhdf5_to_hdf5.main(filename, output_filename, 10240)
                 #print(output_filename, 'converted!!')
@@ -33,5 +35,5 @@ conv_files = sorted(conv_files)
 
 for filename, t in zip(conv_files, tqdm(range(len(conv_files)))):
     data_plots.main(filename)
-    xy_tracks.main(filename)
+    xy_tracks.main(filename, pedestal)
     pass
