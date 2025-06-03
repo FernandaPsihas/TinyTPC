@@ -5,7 +5,8 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 # Replace 'your-slack-bot-token' with your actual Slack bot token
-slack_bot_token = 'xoxb-254106751139-7308664479335-dQw3Qkp7Xh5B2DPGQ7ETQ5gc'
+# slack_bot_token =
+#'xoxb-254106751139-7308664479335-dQw3Qkp7Xh5B2DPGQ7ETQ5gc'
 # Replace 'your-channel-id' with the ID of the Slack channel
 slack_channel_id = 'C079H6J4Q11'
 
