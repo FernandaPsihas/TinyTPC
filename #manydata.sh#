@@ -1,0 +1,36 @@
+source Run-3x3tile.sh false false true true
+
+source Run-3x3tile.sh false false true true
+
+source Run-3x3tile.sh false false true true
+
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1
+
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1
+
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1
+
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1
+
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1
+
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1
+
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1
+
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1
+
+
+python3 start_run_log_raw.py --config_name /Users/tinytpc/data/2023_08_18/2023_08_18_10-00_CT/configs/ --controller_config ./controller/network-3x3-tile-short_byhand_v18b.json --outdir /Users/tinytpc/data/2023_08_18/2023_08_18_10-06_CT/ --runtime 60 >> start.log  2>&1

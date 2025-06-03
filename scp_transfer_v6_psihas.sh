@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# run kinit auth b4 running this
+
+# Define variables for whoever is using the script
+LOCAL_BASE_DIR="/Users/tinytpc/data"
+REMOTE_BASE_DIR="/exp/dune/data/users/englezos/TinyTPC_Fernanda/Bench"
+REMOTE_HOSTNAME="dunegpvm07.fnal.gov"
+USERNAME="psihas"
+
+while true; do
+    # Find day folders with "2024_07" in the name and modified in the last 24 hours
+    DAY_FOLDERS=$(find "$LOCAL_BASE_DIR" -maxdepth 1 -mindepth 1 -type d -mtime -1 -name '*2024_08*')
+
+    # Loop through each day folder
+    for DAY_PATH in $DAY_FOLDERS; do
+        # Find subfolders (time-based) within the day folder that were not modified in the past 10 minutes
+        TIME_FOLDERS=$(find "$DAY_PATH" -maxdepth 1 -mindepth 1 -type d -mmin +2)
+
+        for LOCAL_PATH in $TIME_FOLDERS; do
+            FOLDER=$(basename "$LOCAL_PATH")
+            REMOTE_PATH="$REMOTE_BASE_DIR/$FOLDER"
+            TOKEN_FILE="${LOCAL_PATH}/transfer_complete.token"
+
+            # Skip folders that already have the token file
+            if [ -f "$TOKEN_FILE" ]; then
+                echo "Skipping $LOCAL_PATH, transfer already completed."
+                continue
+            fi
+
+            # Commented out file conversion part
+            # RAW_FILES=$(find "${LOCAL_PATH}" -name '*tile-id-3x3-raw*.h5')
+            # for RAW_FILE in $RAW_FILES; do
+            #     data_rawfilepath=$RAW_FILE
+            #     data_rawfilename=$(basename "$data_rawfilepath")
+            #     data_filename=$(echo "$data_rawfilename" | sed 's/-raw//')
+            #     output_filepath="${LOCAL_PATH}/${data_filename}"
+            #     blocksize="10240"
+            #     echo "Data Filename: $output_filepath"
+            #     echo "Raw Filepath: ${data_rawfilepath}"
+            #     if [ ! -f "$output_filepath" ]; then
+            #         echo 'Converting file...'
+            #         python3 /Users/tinytpc/GitCode/TinyTPC/3x3scripts/convert_rawhdf5_to_hdf5.py --input_filename "$data_rawfilepath" --output_filename "$output_filepath" --block_size "$blocksize"
+            #     fi
+            # done
+
+            # Transfer files to the remote computer
+            if [ -d "$LOCAL_PATH" ]; then
+                echo "Transferring $LOCAL_PATH to $USERNAME@$REMOTE_HOSTNAME:$REMOTE_PATH"
+                scp -r -o GSSAPIAuthentication=yes "$LOCAL_PATH" "$USERNAME@$REMOTE_HOSTNAME:$REMOTE_PATH"
+
+                if [ $? -eq 0 ]; then
+                    echo "Successfully transferred $FOLDER"
+                    # Create a token file to mark the transfer as complete
+                    touch "$TOKEN_FILE"
+                else
+                    echo "Failed to transfer $FOLDER"
+                fi
+            else
+                echo "Directory $LOCAL_PATH does not exist"
+            fi
+        done
+    done
+
+    # Sleep for a little less than 24 hours before running again
+    sleep 43200
+done
