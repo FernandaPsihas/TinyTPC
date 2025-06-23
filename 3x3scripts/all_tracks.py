@@ -7,9 +7,20 @@ import re
 import h5py
 import numpy as np
 import pandas as pd
+import gc
+import glob
+
 #converts all data files in a directory and finds events with >10 hits
 
-pedestal = 'put the pedestal here'
+pedestal = "tile-id-3x3-pedestal_*.h5"
+ped_name = glob.glob(pedestal)
+
+if ped_name:
+	pedestal = ped_name[0]
+	print(pedestal)
+else:
+	print("oopsie with pedestal h5 file")
+
 
 def conv_pedestal(filename):
 
@@ -29,7 +40,7 @@ def conv_pedestal(filename):
                               [31, 32, 42, 14, 49,  0, 63],
                               [33, 36, 43, 46, 50, 59, 62],
                               [34, 37, 44, 47, 51, 58, 61],
-                              [35, 41, 45, 48, 53, 52, 60]])
+                              [35, 41, 45, 48, 53, 52, 60]]) #this 
     
     chip_array = np.array([[14, 13, 12],
                            [24, 23, 22],
@@ -81,18 +92,24 @@ for filename in files:
                 #print(output_filename, 'converted!!')
                 conv_files.append(output_filename)
 
+print('converted files!')
+
 print(len(conv_files), 'files to look at!')
 conv_files = sorted(conv_files)
 # print(conv_files)
 
 regex = re.compile(r'\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}') 
-date = regex.search(pedestal).group()
-output_filename = f'pedestal_{date}.txt'
+#date = regex.search(pedestal).group()
+#output_filename = f'pedestal_{date}.txt'
 
 if output_filename not in files:
-    conv_files(pedestal)
+    conv_pedestal(pedestal)
 
 for filename, t in zip(conv_files, tqdm(range(len(conv_files)))):
-    # data_plots.main(filename, output_filename)
-    xy_tracks.main(filename, output_filename)
+    data_plots.main(filename, pedestal)
+    print("weezer blue plots")
+    xy_tracks.main(filename, pedestal)
+    print("xy did it's thing")
+    gc.collect()
+
     pass

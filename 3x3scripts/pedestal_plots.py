@@ -142,7 +142,7 @@ def plot_xy_and_key(df, date):
                     linewidths = 0.1, ax=ax[0], linecolor='darkgray', cbar_kws ={'label': 'Mean ADC'})
     sns.heatmap(std_data, vmin = 0,  cmap = 'RdPu',  
                     linewidths = 0.1, ax=ax[1], linecolor='darkgray', cbar_kws={'label': 'Std ADC'})
-    sns.heatmap(rate_data, vmin = 0, cmap = 'RdPu',
+    sns.heatmap(rate_data, vmin = 0, vmax = 100,  cmap = 'RdPu',
                     linewidths = 0.1, ax=ax[2], linecolor='darkgray', cbar_kws={'label': 'Rate'})
     
     data_mask = off_chips == 0

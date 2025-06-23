@@ -387,7 +387,8 @@ def main(filename, pedestal, output_dir = str(os.path.dirname(os.path.realpath(_
     ped = parse_pedestal(pedestal)
     df, date = parse_file(filename)
     if len(df) == 0:
-        return
+    	print("weezer")
+        #return
     else: 
         fig_nums = []
         plot_xy_and_key(df, ped, date)
@@ -396,6 +397,8 @@ def main(filename, pedestal, output_dir = str(os.path.dirname(os.path.realpath(_
         fig_nums.append(plt.gcf().number)
         plot_adc_time(df, ped)
         fig_nums.append(plt.gcf().number)
+        
+        print("dbfalkfhk")
     
         output_filename = output_dir + f'/data_{date}.pdf'
         p = PdfPages(output_filename) 

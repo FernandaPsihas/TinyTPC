@@ -29,6 +29,9 @@ drift_time = (d/v)*1e7 #0.1 us
 # print(drift_time)
 
 def parse_pedestal(filename):
+
+    #print(f"Opening pedestal file: {filename} (type: {type(filename)})")
+
     f = h5py.File(filename,'r')
     
     
